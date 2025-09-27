@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, jsonify
 from .tradingview import tradingview
-from replit import db
+from .cookie_manager import CookieManager
 import json
 import os
 from datetime import datetime
@@ -223,13 +223,10 @@ def update_cookies():
         'error': 'Both sessionid and sessionid_sign are required'
       }), 400
     
-    # Guardar en la base de datos de Replit
-    if db is not None:
-      db['tv_sessionid'] = sessionid
-      db['tv_sessionid_sign'] = sessionid_sign
-      db['cookies_updated_at'] = datetime.now().isoformat()
-    else:
-      raise Exception("Database connection not available")
+    # Guardar en archivo JSON
+    cookie_manager = CookieManager()
+    if not cookie_manager.save_cookies(sessionid, sessionid_sign):
+      raise Exception("Failed to save cookies to JSON file")
     
     # Verificar que las cookies funcionan creando una instancia
     try:
