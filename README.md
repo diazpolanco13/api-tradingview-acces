@@ -89,9 +89,11 @@ python main.py
 3. **Dashboard Access**: Full system control and testing
 
 ### **Cookie Management**
-- **Automatic Validation**: System checks cookie status on load
-- **Manual Updates**: Easy cookie refresh when sessions expire
+- **Automatic Validation**: System checks cookie status on load from JSON file
+- **Manual Updates**: Easy cookie refresh when sessions expire (saves to JSON)
 - **Real-time Status**: Live indicator of authentication state
+- **Persistent Storage**: Cookies survive application restarts via local JSON files
+- **Migration Note**: When upgrading from v1, cookies need to be re-entered once via admin panel
 
 ### **Endpoint Testing**
 Six individual test buttons for complete API validation:
@@ -199,11 +201,13 @@ X-Admin-Token: tvapi-your-admin-token
 - **Session-based**: New token per application restart
 - **Header Authentication**: Never exposed in URLs or query parameters
 
-### **Cookie Management**
+### **Cookie Management & Data Persistence**
 - **Manual Extraction**: Bypasses TradingView's bot detection
-- **Database Storage**: Persistent session management
-- **Automatic Validation**: Real-time authentication status
-- **Error Recovery**: Clear instructions for session renewal
+- **JSON File Storage**: Local persistent session management via `data/cookies.json`
+- **File Permissions**: Restricted to owner-only (600) for security
+- **Automatic Validation**: Real-time authentication status verification
+- **Docker Compatible**: Configurable storage path via `COOKIE_FILE` environment variable
+- **Session Recovery**: Cookies persist across application restarts until manually renewed
 
 ### **API Security**
 - **Protected Endpoints**: All admin operations require authentication
@@ -231,15 +235,30 @@ else:
     tv.add_access(access, 'd', days)  # Direct day values
 ```
 
-### **Database Schema**
-Using Replit's built-in key-value database:
-```python
-# Cookie storage
-db['cookies'] = serialized_cookie_data
-
-# Admin token (runtime only)
-admin_token = generate_secure_token()
+### **Data Persistence (JSON Storage)**
+**Local file-based storage** for Docker compatibility:
+```json
+// data/cookies.json
+{
+  "tv_sessionid": "session_cookie_value",
+  "tv_sessionid_sign": "signature_cookie_value", 
+  "cookies_updated_at": "2025-09-27T21:39:26.000000"
+}
 ```
+
+**Storage Management**:
+```python
+# Cookie Manager handles all persistence
+cookie_manager = CookieManager()
+cookie_manager.save_cookies(sessionid, sessionid_sign)  # Saves to JSON
+sessionid, sessionid_sign, timestamp = cookie_manager.load_cookies()  # Loads from JSON
+```
+
+**File Security**:
+- **Location**: `data/cookies.json` (configurable via `COOKIE_FILE` env var)
+- **Permissions**: Automatically set to 600 (owner read/write only)
+- **Gitignored**: Excluded from version control for security
+- **Docker Volumes**: Mount `data/` directory for persistent storage
 
 ---
 
@@ -287,21 +306,29 @@ admin_token = generate_secure_token()
 ### **Common Issues**
 
 #### **Cookie Expiration**
-**Symptoms**: API returns authentication errors
+**Symptoms**: API returns authentication errors, "No valid cookies found" in logs
 **Solution**: 
-1. Open admin panel
+1. Open admin panel at `https://your-app.com/`
 2. Click "Update Cookies" button  
 3. Follow manual extraction instructions
+4. Cookies automatically save to `data/cookies.json`
 
 #### **Token Authentication**
 **Symptoms**: "Unauthorized" responses
 **Solution**: 
-1. Check console for current admin token
+1. Check console for current admin token (development mode shows full token)
 2. Include token in `X-Admin-Token` header
 3. Restart application for new token if needed
 
 #### **30-Day Access Issues**
 **Fixed**: System now properly uses `1M` (1 month) format instead of `30D`
+
+#### **Data Persistence Issues**
+**Symptoms**: Cookies lost after restart, need to re-authenticate frequently
+**Solution**:
+1. **Development**: Cookies auto-save to `data/cookies.json` in project directory
+2. **Docker**: Mount `data/` as persistent volume: `docker run -v cookies_data:/app/data your_image`
+3. **Custom Path**: Set `COOKIE_FILE=/custom/path/cookies.json` environment variable
 
 ---
 
