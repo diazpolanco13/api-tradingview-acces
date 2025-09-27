@@ -2,9 +2,29 @@ from flask import Flask, request, render_template, jsonify
 from tradingview import tradingview
 from replit import db
 import json
+import os
 from datetime import datetime
+from functools import wraps
 #from threading import Thread
 app = Flask('')
+
+# Security: Admin authentication
+def require_admin_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Only accept token in secure header, never in query params
+        admin_token = request.headers.get('X-Admin-Token')
+        expected_token = os.getenv('ADMIN_TOKEN')
+        
+        # Require ADMIN_TOKEN to be set
+        if not expected_token:
+            return jsonify({'error': 'Server misconfigured - ADMIN_TOKEN not set'}), 500
+        
+        if not admin_token or admin_token != expected_token:
+            return jsonify({'error': 'Unauthorized - Valid X-Admin-Token header required'}), 401
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route('/validate/<username>', methods=['GET'])
@@ -25,6 +45,7 @@ def validate(username):
 
 
 @app.route('/access/<username>', methods=['GET', 'POST', 'DELETE'])
+@require_admin_token
 def access(username):
   try:
     jsonPayload = request.json or {}
@@ -67,10 +88,12 @@ def main():
 
 @app.route('/admin')
 def admin_panel():
+  # Public access to serve the HTML - authentication happens via API calls
   return render_template('admin.html')
 
 
 @app.route('/admin/cookies/status', methods=['GET'])
+@require_admin_token
 def check_cookies_status():
   try:
     # Crear instancia de tradingview para verificar el estado
@@ -99,6 +122,7 @@ def check_cookies_status():
 
 
 @app.route('/admin/cookies/update', methods=['POST'])
+@require_admin_token
 def update_cookies():
   try:
     data = request.json or {}

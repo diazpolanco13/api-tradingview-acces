@@ -48,6 +48,14 @@
             padding: 30px;
         }
         
+        .login-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+        
         .status-card {
             background: #f8f9fa;
             border-radius: 8px;
@@ -197,6 +205,14 @@
             border-radius: 4px;
             font-size: 13px;
         }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .main-panel {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -207,61 +223,81 @@
         </div>
         
         <div class="content">
-            <!-- Estado de las cookies -->
-            <div id="cookieStatus" class="status-card">
-                <div class="status-title">Estado de las Cookies</div>
-                <div class="status-info">
-                    <div id="statusText">Verificando estado...</div>
-                    <div id="statusDetails"></div>
+            <!-- Login Section -->
+            <div id="loginSection" class="login-section">
+                <div class="status-title">🔐 Autenticación Requerida</div>
+                <div class="status-info" style="margin-bottom: 15px;">
+                    Ingresa el token de administrador para acceder al panel de control.
                 </div>
-            </div>
-            
-            <!-- Instrucciones -->
-            <div class="instructions">
-                <h3>📋 Cómo obtener las cookies:</h3>
-                <ol>
-                    <li>Inicia sesión en <strong>TradingView.com</strong></li>
-                    <li>Presiona <code>F12</code> para abrir herramientas de desarrollador</li>
-                    <li>Ve a la pestaña <strong>Application</strong> (o Storage)</li>
-                    <li>En el panel izquierdo, expande <strong>Cookies</strong> → <strong>https://www.tradingview.com</strong></li>
-                    <li>Busca y copia los valores de <code>sessionid</code> y <code>sessionid_sign</code></li>
-                    <li>Pega los valores en los campos de abajo</li>
-                </ol>
-            </div>
-            
-            <!-- Alertas -->
-            <div id="alertSuccess" class="alert alert-success"></div>
-            <div id="alertError" class="alert alert-error"></div>
-            
-            <!-- Indicador de carga -->
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <div>Procesando...</div>
-            </div>
-            
-            <!-- Formulario -->
-            <form id="cookieForm">
                 <div class="form-group">
-                    <label for="sessionid" class="form-label">Session ID</label>
-                    <input type="text" id="sessionid" name="sessionid" class="form-input" 
-                           placeholder="Ej: txerwkgj3ka2xplgdgl90vx80ta1b0zl" required>
+                    <label for="adminToken" class="form-label">Token de Administrador</label>
+                    <input type="password" id="adminToken" class="form-input" 
+                           placeholder="Ingresa el token de administrador">
+                </div>
+                <button id="loginBtn" class="btn btn-primary">🚀 Acceder al Panel</button>
+            </div>
+            
+            <!-- Main Panel (hidden until authenticated) -->
+            <div id="mainPanel" class="main-panel">
+                <!-- Estado de las cookies -->
+                <div id="cookieStatus" class="status-card">
+                    <div class="status-title">Estado de las Cookies</div>
+                    <div class="status-info">
+                        <div id="statusText">Verificando estado...</div>
+                        <div id="statusDetails"></div>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="sessionid_sign" class="form-label">Session ID Sign</label>
-                    <input type="text" id="sessionid_sign" name="sessionid_sign" class="form-input" 
-                           placeholder="Ej: v3:1QvRvbhAGe1mKD2doZNO0xjp6MYisrPvLxCkXEomHAA=" required>
+                <!-- Instrucciones -->
+                <div class="instructions">
+                    <h3>📋 Cómo obtener las cookies:</h3>
+                    <ol>
+                        <li>Inicia sesión en <strong>TradingView.com</strong></li>
+                        <li>Presiona <code>F12</code> para abrir herramientas de desarrollador</li>
+                        <li>Ve a la pestaña <strong>Application</strong> (o Storage)</li>
+                        <li>En el panel izquierdo, expande <strong>Cookies</strong> → <strong>https://www.tradingview.com</strong></li>
+                        <li>Busca y copia los valores de <code>sessionid</code> y <code>sessionid_sign</code></li>
+                        <li>Pega los valores en los campos de abajo</li>
+                    </ol>
                 </div>
                 
-                <div style="text-align: center;">
-                    <button type="submit" class="btn btn-primary">💾 Actualizar Cookies</button>
-                    <button type="button" id="checkStatus" class="btn btn-secondary">🔄 Verificar Estado</button>
+                <!-- Alertas -->
+                <div id="alertSuccess" class="alert alert-success"></div>
+                <div id="alertError" class="alert alert-error"></div>
+                
+                <!-- Indicador de carga -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <div>Procesando...</div>
                 </div>
-            </form>
+                
+                <!-- Formulario -->
+                <form id="cookieForm">
+                    <div class="form-group">
+                        <label for="sessionid" class="form-label">Session ID</label>
+                        <input type="text" id="sessionid" name="sessionid" class="form-input" 
+                               placeholder="Ej: txerwkgj3ka2xplgdgl90vx80ta1b0zl" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sessionid_sign" class="form-label">Session ID Sign</label>
+                        <input type="text" id="sessionid_sign" name="sessionid_sign" class="form-input" 
+                               placeholder="Ej: v3:1QvRvbhAGe1mKD2doZNO0xjp6MYisrPvLxCkXEomHAA=" required>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <button type="submit" class="btn btn-primary">💾 Actualizar Cookies</button>
+                        <button type="button" id="checkStatus" class="btn btn-secondary">🔄 Verificar Estado</button>
+                        <button type="button" id="logoutBtn" class="btn btn-secondary">🚪 Cerrar Sesión</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     
     <script>
+        let adminToken = null;
+        
         // Función para mostrar alertas
         function showAlert(message, type) {
             const alertSuccess = document.getElementById('alertSuccess');
@@ -288,14 +324,51 @@
         function setLoading(show) {
             const loading = document.getElementById('loading');
             const form = document.getElementById('cookieForm');
-            loading.style.display = show ? 'block' : 'none';
-            form.style.opacity = show ? '0.5' : '1';
+            if (loading && form) {
+                loading.style.display = show ? 'block' : 'none';
+                form.style.opacity = show ? '0.5' : '1';
+            }
+        }
+        
+        // Función para obtener headers seguros
+        function getSecureHeaders() {
+            if (!adminToken) return null;
+            
+            return {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken
+            };
+        }
+        
+        // Función para verificar autenticación
+        async function verifyAuth() {
+            const headers = getSecureHeaders();
+            if (!headers) return false;
+            
+            try {
+                const response = await fetch('/admin/cookies/status', { headers });
+                return response.status !== 401;
+            } catch (error) {
+                return false;
+            }
         }
         
         // Función para actualizar el estado de las cookies
         async function updateCookieStatus() {
+            const headers = getSecureHeaders();
+            if (!headers) {
+                showAlert('❌ Token de administrador requerido', 'error');
+                return;
+            }
+            
             try {
-                const response = await fetch('/admin/cookies/status');
+                const response = await fetch('/admin/cookies/status', { headers });
+                
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 const statusCard = document.getElementById('cookieStatus');
@@ -332,6 +405,62 @@
             }
         }
         
+        // Función de login
+        async function login() {
+            const tokenInput = document.getElementById('adminToken');
+            const token = tokenInput.value.trim();
+            
+            if (!token) {
+                showAlert('Por favor, ingresa el token de administrador', 'error');
+                return;
+            }
+            
+            adminToken = token;
+            
+            const isValid = await verifyAuth();
+            
+            if (isValid) {
+                sessionStorage.setItem('admin_token', token);
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainPanel').style.display = 'block';
+                showAlert('✅ Autenticación exitosa', 'success');
+                setTimeout(updateCookieStatus, 500);
+            } else {
+                adminToken = null;
+                showAlert('❌ Token inválido', 'error');
+                tokenInput.value = '';
+            }
+        }
+        
+        // Función de logout
+        function logout() {
+            adminToken = null;
+            sessionStorage.removeItem('admin_token');
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('mainPanel').style.display = 'none';
+            document.getElementById('adminToken').value = '';
+            showAlert('🚪 Sesión cerrada', 'success');
+        }
+        
+        // Manejar login automático si hay token guardado
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedToken = sessionStorage.getItem('admin_token');
+            if (savedToken) {
+                document.getElementById('adminToken').value = savedToken;
+                login();
+            }
+        });
+        
+        // Event listeners
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        
+        document.getElementById('adminToken').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+        
         // Manejar envío del formulario
         document.getElementById('cookieForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -347,16 +476,27 @@
             setLoading(true);
             
             try {
+                const headers = getSecureHeaders();
+                if (!headers) {
+                    showAlert('❌ Token de administrador requerido', 'error');
+                    setLoading(false);
+                    return;
+                }
+                
                 const response = await fetch('/admin/cookies/update', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     body: JSON.stringify({
                         sessionid: sessionid,
                         sessionid_sign: sessionid_sign
                     })
                 });
+                
+                if (response.status === 401) {
+                    logout();
+                    setLoading(false);
+                    return;
+                }
                 
                 const data = await response.json();
                 
@@ -382,11 +522,6 @@
         document.getElementById('checkStatus').addEventListener('click', function() {
             setLoading(true);
             updateCookieStatus().finally(() => setLoading(false));
-        });
-        
-        // Cargar estado inicial
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCookieStatus();
         });
     </script>
 </body>
