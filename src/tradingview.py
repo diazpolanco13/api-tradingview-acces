@@ -25,34 +25,27 @@ class tradingview:
       for endpoint in endpoints_to_try:
         try:
           response = requests.get(endpoint, headers=headers)
-          print(f'Endpoint {endpoint} status: {response.status_code}')
-          
           if response.status_code == 200:
             # Try to parse as JSON first
             try:
               data = response.json()
               if data and isinstance(data, dict) and len(data) > 0:
-                print(f'Profile data from {endpoint}: {data}')
                 return data
             except:
               # If not JSON, check if HTML contains useful data
               content = response.text
               if 'userpic' in content or 'avatar' in content:
-                print(f'Found profile page with potential image data: {endpoint}')
                 # Extract image URL from HTML if possible
                 import re
                 img_pattern = r'https://s3\.tradingview\.com/userpics/[^"\']*'
                 matches = re.findall(img_pattern, content)
                 if matches:
                   profile_image = matches[0]
-                  print(f'Found profile image: {profile_image}')
                   return {'profile_image': profile_image, 'username': self.username}
         except Exception as e:
-          print(f'Error with endpoint {endpoint}: {e}')
           continue
           
     except Exception as e:
-      print(f'Error getting profile info: {e}')
       return None
     
   def __init__(self):
@@ -81,9 +74,7 @@ class tradingview:
           self.username = account_data.get('link', '')
           self.partner_status = account_data.get('partner_status', 0)
           self.aff_id = account_data.get('aff_id', 0)
-          print(f'Account balance: ${self.account_balance}')
-          print(f'Username: {self.username}')
-          print(f'Full account data: {account_data}')
+          print('Account data loaded successfully')
           
           # Try to get additional profile info
           profile_info = self.get_profile_info()
@@ -118,13 +109,12 @@ class tradingview:
       'Content-Type': 'application/x-www-form-urlencoded',
       'Cookie': self.cookies
     }
-    print(user_payload)
     usersResponse = requests.post(config.urls['list_users'] +
                                   '?limit=10&order_by=-created',
                                   headers=user_headers,
                                   data=user_payload)
     userResponseJson = usersResponse.json()
-    print(userResponseJson)
+    print(f"Access details request completed with status: {usersResponse.status_code}")
     users = userResponseJson['results']
 
     access_details = user_payload

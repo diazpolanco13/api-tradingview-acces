@@ -3,8 +3,9 @@ import os
 from datetime import datetime
 
 class CookieManager:
-    def __init__(self, file_path='data/cookies.json'):
-        self.file_path = file_path
+    def __init__(self, file_path=None):
+        # Allow configurable cookie file path via environment variable
+        self.file_path = file_path or os.getenv('COOKIE_FILE', 'data/cookies.json')
         self.ensure_data_dir()
     
     def ensure_data_dir(self):
@@ -20,8 +21,11 @@ class CookieManager:
         }
         
         try:
+            # Ensure proper file permissions (read/write for owner only)
+            import stat
             with open(self.file_path, 'w') as f:
                 json.dump(data, f, indent=2)
+            os.chmod(self.file_path, stat.S_IRUSR | stat.S_IWUSR)  # 600 permissions
             return True
         except Exception as e:
             print(f"Error saving cookies: {e}")

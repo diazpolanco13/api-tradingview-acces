@@ -3,10 +3,15 @@ from .tradingview import tradingview
 from .cookie_manager import CookieManager
 import json
 import os
+import logging
 from datetime import datetime
 from functools import wraps
 #from threading import Thread
 app = Flask('')
+
+# Disable access logging for production to prevent username leakage
+if os.getenv('ENV') == 'production':
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # Security: Admin authentication
 def require_admin_token(f):
@@ -30,7 +35,6 @@ def require_admin_token(f):
 @app.route('/validate/<username>', methods=['GET'])
 def validate(username):
   try:
-    print(username)
     tv = tradingview()
     response = tv.validate_username(username)
     return json.dumps(response), 200, {
@@ -51,7 +55,6 @@ def access(username):
     # Solo leer JSON en métodos que tienen body
     if request.method in ['POST', 'DELETE']:
       jsonPayload = request.json or {}
-      print(f"Payload received: {jsonPayload}")
     else:
       jsonPayload = {}
       
@@ -68,7 +71,6 @@ def access(username):
           try:
             tv = tradingview()
             access = tv.get_access_details(username, indicator_id_param)
-            print(f"Access details response: {access}")
             # Usar el campo correcto 'hasAccess' en lugar de 'results'
             has_access = access.get('hasAccess', False) if isinstance(access, dict) else False
             response = {
@@ -129,7 +131,6 @@ def access(username):
     else:
       tv = tradingview()
       pine_ids = jsonPayload.get('pine_ids') or []
-      print(f"Pine IDs: {pine_ids}")
       accessList = []
       for pine_id in pine_ids:
         access = tv.get_access_details(username, pine_id)
