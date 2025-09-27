@@ -11,35 +11,17 @@ import helper
 class tradingview:
 
   def __init__(self):
-    print('Getting sessionid from db')
-    self.sessionid = db["sessionid"] if 'sessionid' in db.keys() else 'abcd'
-
-    headers = {'cookie': 'sessionid=' + self.sessionid}
+    print('Using manual cookies for testing')
+    # Use manual cookies for testing
+    self.sessionid = 'txerwkgj3ka2xplgdgl90vx80ta1b0zl'
+    self.sessionid_sign = 'v3:1QvRvbhAGe1mKD2doZNO0xjp6MYisrPvLxCkXEomHAA='
+    self.cookies = f'sessionid={self.sessionid}; sessionid_sign={self.sessionid_sign}'
+    
+    print(f'Testing with sessionid: {self.sessionid}')
+    headers = {'cookie': self.cookies}
     test = requests.request("GET", config.urls["tvcoins"], headers=headers)
-    print(test.text)
-    print('sessionid from db : ' + self.sessionid)
-    if test.status_code != 200:
-      print('session id from db is invalid')
-      username = os.environ['tvusername']
-      password = os.environ['tvpassword']
-
-      payload = {'username': username, 'password': password, 'remember': 'on'}
-      body, contentType = encode_multipart_formdata(payload)
-      userAgent = 'TWAPI/3.0 (' + platform.system() + '; ' + platform.version(
-      ) + '; ' + platform.release() + ')'
-      print(userAgent)
-      login_headers = {
-        'origin': 'https://www.tradingview.com',
-        'User-Agent': userAgent,
-        'Content-Type': contentType,
-        'referer': 'https://www.tradingview.com'
-      }
-      login = requests.post(config.urls["signin"],
-                            data=body,
-                            headers=login_headers)
-      cookies = login.cookies.get_dict()
-      self.sessionid = cookies["sessionid"]
-      db["sessionid"] = self.sessionid
+    print(f'Test response status: {test.status_code}')
+    print(f'Test response: {test.text}')
 
   def validate_username(self, username):
     users = requests.get(config.urls["username_hint"] + "?s=" + username)
@@ -58,7 +40,7 @@ class tradingview:
     user_headers = {
       'origin': 'https://www.tradingview.com',
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': 'sessionid=' + self.sessionid
+      'Cookie': self.cookies
     }
     print(user_payload)
     usersResponse = requests.post(config.urls['list_users'] +
@@ -112,7 +94,7 @@ class tradingview:
       headers = {
         'origin': 'https://www.tradingview.com',
         'Content-Type': contentType,
-        'cookie': 'sessionid=' + self.sessionid
+        'cookie': self.cookies
       }
       add_access_response = requests.post(config.urls[enpoint_type],
                                           data=body,
@@ -132,7 +114,7 @@ class tradingview:
     headers = {
       'origin': 'https://www.tradingview.com',
       'Content-Type': contentType,
-      'cookie': 'sessionid=' + self.sessionid
+      'cookie': self.cookies
     }
     remove_access_response = requests.post(config.urls['remove_access'],
                                            data=body,
