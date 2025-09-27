@@ -25,7 +25,7 @@ def validate(username):
 @app.route('/access/<username>', methods=['GET', 'POST', 'DELETE'])
 def access(username):
   try:
-    jsonPayload = request.json
+    jsonPayload = request.json or {}
     pine_ids = jsonPayload.get('pine_ids')
     print(jsonPayload)
     print(pine_ids)
