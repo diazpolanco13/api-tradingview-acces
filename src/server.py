@@ -62,14 +62,38 @@ def access(username):
       days = jsonPayload.get('days')
       
       if request.method == 'GET':
-        # Solo verificar acceso - no necesita indicador específico para la prueba
-        # Respuesta simple sin llamadas a TradingView para evitar errores
-        response = {
-          'username': username,
-          'has_access': False,  # Por defecto no tiene acceso
-          'status': 'checked'
-        }
-        return jsonify(response), 200
+        # Verificar acceso real al indicador si se proporciona indicator_id en query params
+        indicator_id_param = request.args.get('indicator_id')
+        if indicator_id_param:
+          try:
+            tv = tradingview()
+            access = tv.get_access_details(username, indicator_id_param)
+            has_access = len(access.get('results', [])) > 0
+            response = {
+              'username': username,
+              'has_access': has_access,
+              'status': 'checked',
+              'indicator_id': indicator_id_param,
+              'access_count': len(access.get('results', []))
+            }
+            return jsonify(response), 200
+          except Exception as e:
+            print(f"Error checking access: {e}")
+            response = {
+              'username': username,
+              'has_access': False,
+              'status': 'error',
+              'error': str(e)
+            }
+            return jsonify(response), 200
+        else:
+          # Respuesta simple sin indicador específico
+          response = {
+            'username': username,
+            'has_access': False,
+            'status': 'checked'
+          }
+          return jsonify(response), 200
       
       elif request.method == 'POST' and indicator_id and days:
         # Otorgar acceso
@@ -192,9 +216,12 @@ def update_cookies():
       }), 400
     
     # Guardar en la base de datos de Replit
-    db['tv_sessionid'] = sessionid
-    db['tv_sessionid_sign'] = sessionid_sign
-    db['cookies_updated_at'] = datetime.now().isoformat()
+    if db is not None:
+      db['tv_sessionid'] = sessionid
+      db['tv_sessionid_sign'] = sessionid_sign
+      db['cookies_updated_at'] = datetime.now().isoformat()
+    else:
+      raise Exception("Database connection not available")
     
     # Verificar que las cookies funcionan creando una instancia
     try:

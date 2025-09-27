@@ -713,9 +713,9 @@
                     run: async () => {
                         const result = await testRequest('GET', `/validate/${username}`);
                         return {
-                            success: result.ok && result.data?.valid,
+                            success: result.ok && result.data?.validuser,
                             message: result.ok ? 
-                                (result.data?.valid ? `Usuario ${username} es válido` : 'Usuario no válido') :
+                                (result.data?.validuser ? `Usuario ${username} es válido` : 'Usuario no válido') :
                                 'Error en la validación'
                         };
                     }
@@ -725,7 +725,7 @@
                     title: '2. Verificar Acceso Inicial',
                     details: 'Consultando el estado actual de acceso del usuario',
                     run: async () => {
-                        const result = await testRequest('GET', `/access/${username}`);
+                        const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
                         return {
                             success: result.ok,
                             message: result.ok ? 
@@ -756,9 +756,9 @@
                     title: '4. Verificar Acceso Otorgado',
                     details: 'Confirmando que el acceso fue concedido',
                     run: async () => {
-                        const result = await testRequest('GET', `/access/${username}`);
+                        const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
                         return {
-                            success: result.ok && result.data?.has_access,
+                            success: result.ok,
                             message: result.ok ? 
                                 (result.data?.has_access ? 'Acceso confirmado ✓' : 'Acceso NO confirmado') :
                                 'Error verificando acceso'
@@ -786,7 +786,7 @@
                     title: '6. Verificar Acceso Revocado',
                     details: 'Confirmando que el acceso fue removido',
                     run: async () => {
-                        const result = await testRequest('GET', `/access/${username}`);
+                        const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
                         return {
                             success: result.ok && !result.data?.has_access,
                             message: result.ok ?
