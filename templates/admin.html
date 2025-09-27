@@ -315,15 +315,85 @@
                             </div>
                             
                             <div style="text-align: center; margin: 20px 0;">
-                                <button type="button" id="runTests" class="btn btn-primary">🚀 Ejecutar Pruebas</button>
-                                <button type="button" id="clearTests" class="btn btn-secondary">🗑️ Limpiar</button>
+                                <button type="button" id="clearTests" class="btn btn-secondary">🗑️ Limpiar Resultados</button>
                             </div>
                         </form>
                         
-                        <!-- Área de Resultados de Pruebas -->
-                        <div id="testResults" class="test-results" style="display: none;">
-                            <h3>📊 Resultados de Pruebas</h3>
-                            <div id="testSteps"></div>
+                        <!-- Tests Individuales -->
+                        <div id="individualTests" class="individual-tests">
+                            <h3>📊 Pruebas Individuales</h3>
+                            
+                            <!-- Test 1: Validar Usuario -->
+                            <div class="test-card" id="test-card-1">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>1. Validar Usuario</h4>
+                                        <p>Verificar que el usuario existe en TradingView</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="1">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-1" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Test 2: Verificar Acceso Inicial -->
+                            <div class="test-card" id="test-card-2">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>2. Verificar Acceso Inicial</h4>
+                                        <p>Consultar el estado actual de acceso del usuario</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="2">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-2" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Test 3: Otorgar Acceso -->
+                            <div class="test-card" id="test-card-3">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>3. Otorgar Acceso (30 días)</h4>
+                                        <p>Conceder acceso por 30 días al indicador</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="3">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-3" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Test 4: Verificar Acceso Otorgado -->
+                            <div class="test-card" id="test-card-4">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>4. Verificar Acceso Otorgado</h4>
+                                        <p>Confirmar que el acceso fue concedido</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="4">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-4" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Test 5: Revocar Acceso -->
+                            <div class="test-card" id="test-card-5">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>5. Revocar Acceso</h4>
+                                        <p>Remover acceso al indicador</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="5">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-5" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Test 6: Verificar Revocación -->
+                            <div class="test-card" id="test-card-6">
+                                <div class="test-header">
+                                    <div class="test-info">
+                                        <h4>6. Verificar Acceso Revocado</h4>
+                                        <p>Confirmar que el acceso fue removido</p>
+                                    </div>
+                                    <button class="btn btn-primary test-btn" data-test="6">🚀 Probar</button>
+                                </div>
+                                <div class="test-result" id="result-6" style="display: none;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -371,6 +441,80 @@
         
         .test-step-content {
             flex: 1;
+        }
+        
+        /* Estilos para tests individuales */
+        .individual-tests {
+            margin-top: 20px;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin: 10px 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .test-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .test-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .test-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .test-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            min-width: 100px;
+        }
+        
+        .test-btn:disabled {
+            background: #6c757d;
+            border-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .test-result {
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .test-result.running {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
         }
         
         .test-step-title {
@@ -839,18 +983,155 @@
         
         // Función para limpiar las pruebas
         function clearTests() {
-            const testResults = document.getElementById('testResults');
-            const testSteps = document.getElementById('testSteps');
+            // Limpiar todos los resultados de tests individuales
+            for (let i = 1; i <= 6; i++) {
+                const resultDiv = document.getElementById(`result-${i}`);
+                if (resultDiv) {
+                    resultDiv.style.display = 'none';
+                    resultDiv.className = 'test-result';
+                    resultDiv.innerHTML = '';
+                }
+            }
             
-            testResults.style.display = 'none';
-            testSteps.innerHTML = '';
-            
+            // Limpiar campos de entrada
             document.getElementById('testUsername').value = '';
             document.getElementById('testIndicatorId').value = '';
+            
+            showAlert('✅ Resultados limpiados', 'success');
         }
         
-        // Event listeners para pruebas
-        document.getElementById('runTests').addEventListener('click', runEndpointTests);
+        // Definir los tests individuales
+        const testDefinitions = {
+            1: {
+                name: '1. Validar Usuario',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('GET', `/validate/${username}`);
+                    return {
+                        success: result.ok && result.data?.validuser,
+                        message: result.ok ? 
+                            (result.data?.validuser ? `Usuario ${username} es válido` : 'Usuario no válido') :
+                            'Error en la validación'
+                    };
+                }
+            },
+            2: {
+                name: '2. Verificar Acceso Inicial',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
+                    return {
+                        success: result.ok,
+                        message: result.ok ? 
+                            `Acceso actual: ${result.data?.has_access ? 'PERMITIDO' : 'NO PERMITIDO'}` :
+                            'Error consultando acceso'
+                    };
+                }
+            },
+            3: {
+                name: '3. Otorgar Acceso (30 días)',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('POST', `/access/${username}`, {
+                        indicator_id: indicatorId,
+                        days: 30
+                    });
+                    return {
+                        success: result.ok && result.data?.success,
+                        message: result.ok ? 
+                            (result.data?.success ? 'Acceso otorgado correctamente' : result.data?.error || 'Error') :
+                            'Error otorgando acceso'
+                    };
+                }
+            },
+            4: {
+                name: '4. Verificar Acceso Otorgado',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
+                    return {
+                        success: result.ok,
+                        message: result.ok ? 
+                            (result.data?.has_access ? 'Acceso confirmado ✓' : 'Acceso NO confirmado') :
+                            'Error verificando acceso'
+                    };
+                }
+            },
+            5: {
+                name: '5. Revocar Acceso',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('DELETE', `/access/${username}`, {
+                        indicator_id: indicatorId
+                    });
+                    return {
+                        success: result.ok && result.data?.success,
+                        message: result.ok ?
+                            (result.data?.success ? 'Acceso revocado correctamente' : result.data?.error || 'Error') :
+                            'Error revocando acceso'
+                    };
+                }
+            },
+            6: {
+                name: '6. Verificar Acceso Revocado',
+                run: async (username, indicatorId) => {
+                    const result = await testRequest('GET', `/access/${username}?indicator_id=${encodeURIComponent(indicatorId)}`);
+                    return {
+                        success: result.ok && !result.data?.has_access,
+                        message: result.ok ?
+                            (!result.data?.has_access ? 'Revocación confirmada ✓' : 'Acceso AÚN PRESENTE') :
+                            'Error verificando revocación'
+                    };
+                }
+            }
+        };
+
+        // Función para ejecutar un test individual
+        async function runIndividualTest(testNumber) {
+            const username = document.getElementById('testUsername').value.trim();
+            const indicatorId = document.getElementById('testIndicatorId').value.trim();
+            
+            if (!username || !indicatorId) {
+                showAlert('❌ Por favor completa ambos campos antes de ejecutar las pruebas', 'error');
+                return;
+            }
+            
+            const testBtn = document.querySelector(`[data-test="${testNumber}"]`);
+            const resultDiv = document.getElementById(`result-${testNumber}`);
+            
+            // Deshabilitar botón y mostrar estado de carga
+            testBtn.disabled = true;
+            testBtn.textContent = '⏳ Ejecutando...';
+            
+            // Mostrar área de resultado
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result running';
+            resultDiv.innerHTML = '⏳ Ejecutando prueba...';
+            
+            try {
+                const testDef = testDefinitions[testNumber];
+                const result = await testDef.run(username, indicatorId);
+                
+                if (result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `✅ ${result.message}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `❌ ${result.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `❌ Error inesperado: ${error.message}`;
+            } finally {
+                // Rehabilitar botón
+                testBtn.disabled = false;
+                testBtn.textContent = '🚀 Probar';
+            }
+        }
+
+        // Event listeners para pruebas individuales
+        document.querySelectorAll('.test-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const testNumber = parseInt(e.target.getAttribute('data-test'));
+                runIndividualTest(testNumber);
+            });
+        });
+        
         document.getElementById('clearTests').addEventListener('click', clearTests);
     </script>
 </body>
