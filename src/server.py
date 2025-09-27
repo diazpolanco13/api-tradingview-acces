@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, jsonify
-from tradingview import tradingview
+from .tradingview import tradingview
 from replit import db
 import json
 import os
@@ -102,13 +102,21 @@ def check_cookies_status():
     # Si llegamos aquí sin errores, las cookies son válidas
     current_time = datetime.now().isoformat()
     
-    # Obtener información de la cuenta si está disponible
+    # Obtener información completa de la cuenta
     balance = getattr(tv, 'account_balance', '0.00')
+    username = getattr(tv, 'username', '')
+    partner_status = getattr(tv, 'partner_status', 0)
+    aff_id = getattr(tv, 'aff_id', 0)
+    profile_info = getattr(tv, 'profile_info', {})
     
     return jsonify({
       'valid': True,
       'lastCheck': current_time,
       'balance': balance,
+      'username': username,
+      'partner_status': partner_status,
+      'aff_id': aff_id,
+      'profile_info': profile_info,
       'status': 'authenticated'
     })
   except Exception as e:

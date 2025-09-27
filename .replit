@@ -33,7 +33,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 34167
+localPort = 40201
 externalPort = 3000
 
 [workflows]
@@ -59,3 +59,6 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[deployment]
+deploymentTarget = "autoscale"

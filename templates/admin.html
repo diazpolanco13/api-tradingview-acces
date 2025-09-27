@@ -380,9 +380,27 @@
                 if (data.valid) {
                     statusCard.classList.add('valid');
                     statusText.textContent = '✅ Cookies Válidas';
+                    
+                    let profileImageHtml = '';
+                    if (data.profile_info && data.profile_info.profile_image) {
+                        profileImageHtml = `
+                            <div style="margin: 10px 0; text-align: center;">
+                                <img src="${data.profile_info.profile_image}" 
+                                     alt="Profile" 
+                                     style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid #28a745;">
+                            </div>
+                        `;
+                    }
+                    
+                    const partnerStatusText = data.partner_status === 1 ? '✅ Partner Activo' : '❌ No es Partner';
+                    
                     statusDetails.innerHTML = `
+                        ${profileImageHtml}
+                        <strong>Usuario:</strong> @${data.username || 'N/A'}<br>
                         <strong>Última verificación:</strong> ${new Date(data.lastCheck).toLocaleString()}<br>
                         <strong>Balance:</strong> $${data.balance || '0.00'}<br>
+                        <strong>Estado Partner:</strong> ${partnerStatusText}<br>
+                        <strong>ID de Afiliado:</strong> ${data.aff_id || 'N/A'}<br>
                         <strong>Estado:</strong> Autenticado correctamente
                     `;
                 } else {

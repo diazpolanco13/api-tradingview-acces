@@ -1,15 +1,60 @@
 import os
 from replit import db
-import config
+from . import config
 import requests
 import platform
 from urllib3 import encode_multipart_formdata
 from datetime import datetime, timezone
-import helper
+from . import helper
 
 
 class tradingview:
 
+  def get_profile_info(self):
+    """Get detailed profile information"""
+    try:
+      # Try different endpoints for user data
+      headers = {'cookie': self.cookies}
+      endpoints_to_try = [
+        f"https://www.tradingview.com/pine_perm/get_author_data/?username={self.username}",
+        f"https://www.tradingview.com/u/{self.username}/",
+        "https://www.tradingview.com/accounts/me/",
+        "https://www.tradingview.com/social/user/",
+      ]
+      
+      for endpoint in endpoints_to_try:
+        try:
+          response = requests.get(endpoint, headers=headers)
+          print(f'Endpoint {endpoint} status: {response.status_code}')
+          
+          if response.status_code == 200:
+            # Try to parse as JSON first
+            try:
+              data = response.json()
+              if data and isinstance(data, dict) and len(data) > 0:
+                print(f'Profile data from {endpoint}: {data}')
+                return data
+            except:
+              # If not JSON, check if HTML contains useful data
+              content = response.text
+              if 'userpic' in content or 'avatar' in content:
+                print(f'Found profile page with potential image data: {endpoint}')
+                # Extract image URL from HTML if possible
+                import re
+                img_pattern = r'https://s3\.tradingview\.com/userpics/[^"\']*'
+                matches = re.findall(img_pattern, content)
+                if matches:
+                  profile_image = matches[0]
+                  print(f'Found profile image: {profile_image}')
+                  return {'profile_image': profile_image, 'username': self.username}
+        except Exception as e:
+          print(f'Error with endpoint {endpoint}: {e}')
+          continue
+          
+    except Exception as e:
+      print(f'Error getting profile info: {e}')
+      return None
+    
   def __init__(self):
     print('Loading cookies from database')
     
@@ -31,7 +76,17 @@ class tradingview:
         try:
           account_data = test.json()
           self.account_balance = account_data.get('partner_fiat_balance', 0)
+          self.username = account_data.get('link', '')
+          self.partner_status = account_data.get('partner_status', 0)
+          self.aff_id = account_data.get('aff_id', 0)
           print(f'Account balance: ${self.account_balance}')
+          print(f'Username: {self.username}')
+          print(f'Full account data: {account_data}')
+          
+          # Try to get additional profile info
+          profile_info = self.get_profile_info()
+          if profile_info:
+            self.profile_info = profile_info
         except:
           self.account_balance = 0
         return
