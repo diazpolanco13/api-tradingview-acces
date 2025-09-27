@@ -9,8 +9,15 @@ if __name__ == '__main__':
         import secrets
         admin_token = f"tvapi-{secrets.token_urlsafe(32)}"
         os.environ['ADMIN_TOKEN'] = admin_token
-        print("🔐 ADMIN_TOKEN generado y configurado.")
-        print("   ⚠️  Token disponible solo en variables de entorno por seguridad")
+        print("🔐 Admin token generado para esta sesión:")
+        
+        # Solo mostrar el token completo en desarrollo (no en producción/Docker)
+        if os.getenv('ENV') == 'production':
+            print("   Token: [HIDDEN - available in environment variables]")
+            print("   ⚠️  Para seguridad en producción, el token no se muestra en logs")
+        else:
+            print(f"   {admin_token}")
+            print("   Usa este token para acceder al panel de administración")
     else:
         print("✅ Admin panel secured with configured token")
     
