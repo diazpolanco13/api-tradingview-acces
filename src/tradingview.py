@@ -1,11 +1,11 @@
 import os
-from replit import db
 from . import config
 import requests
 import platform
 from urllib3 import encode_multipart_formdata
 from datetime import datetime, timezone
 from . import helper
+from .cookie_manager import CookieManager
 
 
 class tradingview:
@@ -56,14 +56,16 @@ class tradingview:
       return None
     
   def __init__(self):
-    print('Loading cookies from database')
+    print('Loading cookies from JSON file')
     
-    # Try to get cookies from database first
-    self.sessionid = db.get('tv_sessionid', '')
-    self.sessionid_sign = db.get('tv_sessionid_sign', '')
+    # Initialize cookie manager
+    self.cookie_manager = CookieManager()
+    
+    # Try to get cookies from JSON file first
+    self.sessionid, self.sessionid_sign, _ = self.cookie_manager.load_cookies()
     
     if self.sessionid and self.sessionid_sign:
-      print('Using cookies from database')
+      print('Using cookies from JSON file')
       self.cookies = f'sessionid={self.sessionid}; sessionid_sign={self.sessionid_sign}'
       
       # Test if cookies are valid
@@ -72,7 +74,7 @@ class tradingview:
       print(f'Cookie test response status: {test.status_code}')
       
       if test.status_code == 200:
-        print('Database cookies are valid')
+        print('JSON file cookies are valid')
         try:
           account_data = test.json()
           self.account_balance = account_data.get('partner_fiat_balance', 0)
@@ -91,7 +93,7 @@ class tradingview:
           self.account_balance = 0
         return
       else:
-        print('Database cookies are invalid, need manual update')
+        print('JSON file cookies are invalid, need manual update')
         
     # If no valid cookies, raise an error that requires manual intervention
     print('No valid cookies found - please update through admin panel')
