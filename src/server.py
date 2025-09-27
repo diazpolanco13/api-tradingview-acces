@@ -68,13 +68,16 @@ def access(username):
           try:
             tv = tradingview()
             access = tv.get_access_details(username, indicator_id_param)
-            has_access = len(access.get('results', [])) > 0
+            print(f"Access details response: {access}")
+            # Usar el campo correcto 'hasAccess' en lugar de 'results'
+            has_access = access.get('hasAccess', False) if isinstance(access, dict) else False
             response = {
               'username': username,
               'has_access': has_access,
               'status': 'checked',
               'indicator_id': indicator_id_param,
-              'access_count': len(access.get('results', []))
+              'expiration': access.get('currentExpiration') if has_access else None,
+              'no_expiration': access.get('noExpiration', False) if has_access else False
             }
             return jsonify(response), 200
           except Exception as e:
