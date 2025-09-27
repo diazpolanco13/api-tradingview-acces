@@ -101,7 +101,7 @@ def check_cookies_status():
 @app.route('/admin/cookies/update', methods=['POST'])
 def update_cookies():
   try:
-    data = request.json
+    data = request.json or {}
     sessionid = data.get('sessionid', '').strip()
     sessionid_sign = data.get('sessionid_sign', '').strip()
     

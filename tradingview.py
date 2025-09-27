@@ -11,17 +11,36 @@ import helper
 class tradingview:
 
   def __init__(self):
-    print('Using manual cookies for testing')
-    # Use manual cookies for testing
-    self.sessionid = 'txerwkgj3ka2xplgdgl90vx80ta1b0zl'
-    self.sessionid_sign = 'v3:1QvRvbhAGe1mKD2doZNO0xjp6MYisrPvLxCkXEomHAA='
-    self.cookies = f'sessionid={self.sessionid}; sessionid_sign={self.sessionid_sign}'
+    print('Loading cookies from database')
     
-    print(f'Testing with sessionid: {self.sessionid}')
-    headers = {'cookie': self.cookies}
-    test = requests.request("GET", config.urls["tvcoins"], headers=headers)
-    print(f'Test response status: {test.status_code}')
-    print(f'Test response: {test.text}')
+    # Try to get cookies from database first
+    self.sessionid = db.get('tv_sessionid', '')
+    self.sessionid_sign = db.get('tv_sessionid_sign', '')
+    
+    if self.sessionid and self.sessionid_sign:
+      print('Using cookies from database')
+      self.cookies = f'sessionid={self.sessionid}; sessionid_sign={self.sessionid_sign}'
+      
+      # Test if cookies are valid
+      headers = {'cookie': self.cookies}
+      test = requests.request("GET", config.urls["tvcoins"], headers=headers)
+      print(f'Cookie test response status: {test.status_code}')
+      
+      if test.status_code == 200:
+        print('Database cookies are valid')
+        try:
+          account_data = test.json()
+          self.account_balance = account_data.get('partner_fiat_balance', 0)
+          print(f'Account balance: ${self.account_balance}')
+        except:
+          self.account_balance = 0
+        return
+      else:
+        print('Database cookies are invalid, need manual update')
+        
+    # If no valid cookies, raise an error that requires manual intervention
+    print('No valid cookies found - please update through admin panel')
+    raise Exception('Invalid or expired TradingView session. Please update cookies through /admin panel.')
 
   def validate_username(self, username):
     users = requests.get(config.urls["username_hint"] + "?s=" + username)
