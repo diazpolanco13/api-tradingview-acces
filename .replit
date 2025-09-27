@@ -27,6 +27,7 @@ requiredFiles = [".replit", "replit.nix", ".config", "venv"]
 
 [agent]
 expertMode = true
+integrations = ["github:1.0.0"]
 
 [[ports]]
 localPort = 5000
