@@ -537,9 +537,16 @@
         });
         
         // Botón de verificar estado
-        document.getElementById('checkStatus').addEventListener('click', function() {
+        document.getElementById('checkStatus').addEventListener('click', async function() {
             setLoading(true);
-            updateCookieStatus().finally(() => setLoading(false));
+            try {
+                await updateCookieStatus();
+                showAlert('✅ Estado verificado correctamente', 'success');
+            } catch (error) {
+                showAlert('❌ Error al verificar el estado', 'error');
+            } finally {
+                setLoading(false);
+            }
         });
     </script>
 </body>
