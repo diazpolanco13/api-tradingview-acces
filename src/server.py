@@ -48,9 +48,13 @@ def validate(username):
 @require_admin_token
 def access(username):
   try:
-    jsonPayload = request.json or {}
-    print(f"Payload received: {jsonPayload}")
-
+    # Solo leer JSON en métodos que tienen body
+    if request.method in ['POST', 'DELETE']:
+      jsonPayload = request.json or {}
+      print(f"Payload received: {jsonPayload}")
+    else:
+      jsonPayload = {}
+      
     # Nuevo formato para compatibilidad con pruebas
     if 'indicator_id' in jsonPayload or request.method == 'GET':
       # Formato de pruebas: indicator_id + days
