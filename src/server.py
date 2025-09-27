@@ -103,7 +103,12 @@ def access(username):
         try:
           tv = tradingview()
           access = tv.get_access_details(username, indicator_id)
-          tv.add_access(access, 'd', days)  # 'd' = días
+          # Formato correcto según documentación: Para 30 días usar 1M (1 mes)
+          if days == 30:
+            tv.add_access(access, 'M', 1)  # 1 mes = 30 días aproximadamente
+          else:
+            # Para otros valores usar días directamente  
+            tv.add_access(access, 'd', days)
           return jsonify({'success': True, 'message': f'Access granted for {days} days'}), 200
         except Exception as e:
           print(f"Error granting access: {e}")
