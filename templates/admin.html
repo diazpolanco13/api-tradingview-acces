@@ -293,7 +293,96 @@
                 </form>
             </div>
         </div>
+        
+        <!-- Sección de Pruebas de Endpoints -->
+        <div class="admin-card">
+            <div class="card-header">
+                <h2>🧪 Pruebas de Endpoints</h2>
+                <p>Prueba todos los endpoints con datos reales para verificar que funcionan correctamente</p>
+            </div>
+            <div class="card-body">
+                <form id="testForm">
+                    <div class="form-group">
+                        <label for="testUsername" class="form-label">Usuario a Probar</label>
+                        <input type="text" id="testUsername" name="testUsername" class="form-input" 
+                               placeholder="Ej: tradingview_user" required>
+                        <small style="color: #666;">Ingresa un username válido de TradingView</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testIndicatorId" class="form-label">ID del Indicador</label>
+                        <input type="text" id="testIndicatorId" name="testIndicatorId" class="form-input" 
+                               placeholder="Ej: PUB;abcd1234efgh5678" required>
+                        <small style="color: #666;">Formato: PUB;identificador_del_indicador</small>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button type="button" id="runTests" class="btn btn-primary">🚀 Ejecutar Pruebas</button>
+                        <button type="button" id="clearTests" class="btn btn-secondary">🗑️ Limpiar</button>
+                    </div>
+                </form>
+                
+                <!-- Área de Resultados de Pruebas -->
+                <div id="testResults" class="test-results" style="display: none;">
+                    <h3>📊 Resultados de Pruebas</h3>
+                    <div id="testSteps"></div>
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <style>
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .test-step {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .test-step.running {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .test-step.success {
+            background: #d1edff;
+            border-left-color: #28a745;
+        }
+        
+        .test-step.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .test-step-icon {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .test-step-content {
+            flex: 1;
+        }
+        
+        .test-step-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .test-step-details {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
     
     <script>
         let adminToken = null;
@@ -548,6 +637,221 @@
                 setLoading(false);
             }
         });
+        
+        // ========== FUNCIONES DE PRUEBA ==========
+        
+        // Función para crear un step de prueba
+        function createTestStep(id, title, details = '') {
+            const step = document.createElement('div');
+            step.className = 'test-step';
+            step.id = `step-${id}`;
+            step.innerHTML = `
+                <div class="test-step-icon">⏳</div>
+                <div class="test-step-content">
+                    <div class="test-step-title">${title}</div>
+                    <div class="test-step-details">${details}</div>
+                </div>
+            `;
+            return step;
+        }
+        
+        // Función para actualizar el estado de un step
+        function updateTestStep(id, status, icon, details = '') {
+            const step = document.getElementById(`step-${id}`);
+            if (step) {
+                step.className = `test-step ${status}`;
+                step.querySelector('.test-step-icon').textContent = icon;
+                if (details) {
+                    step.querySelector('.test-step-details').textContent = details;
+                }
+            }
+        }
+        
+        // Función para hacer peticiones de prueba
+        async function testRequest(method, url, body = null) {
+            const headers = getSecureHeaders();
+            const options = {
+                method: method,
+                headers: headers
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            const response = await fetch(url, options);
+            return {
+                status: response.status,
+                ok: response.ok,
+                data: await response.json().catch(() => null)
+            };
+        }
+        
+        // Función principal de pruebas
+        async function runEndpointTests() {
+            const username = document.getElementById('testUsername').value.trim();
+            const indicatorId = document.getElementById('testIndicatorId').value.trim();
+            
+            if (!username || !indicatorId) {
+                showAlert('❌ Por favor completa ambos campos', 'error');
+                return;
+            }
+            
+            const testResults = document.getElementById('testResults');
+            const testSteps = document.getElementById('testSteps');
+            
+            // Mostrar área de resultados y limpiar
+            testResults.style.display = 'block';
+            testSteps.innerHTML = '';
+            
+            // Definir las pruebas
+            const tests = [
+                {
+                    id: 1,
+                    title: '1. Validar Usuario',
+                    details: 'Verificando que el usuario existe en TradingView',
+                    run: async () => {
+                        const result = await testRequest('GET', `/validate/${username}`);
+                        return {
+                            success: result.ok && result.data?.valid,
+                            message: result.ok ? 
+                                (result.data?.valid ? `Usuario ${username} es válido` : 'Usuario no válido') :
+                                'Error en la validación'
+                        };
+                    }
+                },
+                {
+                    id: 2,
+                    title: '2. Verificar Acceso Inicial',
+                    details: 'Consultando el estado actual de acceso del usuario',
+                    run: async () => {
+                        const result = await testRequest('GET', `/access/${username}`);
+                        return {
+                            success: result.ok,
+                            message: result.ok ? 
+                                `Acceso actual: ${result.data?.has_access ? 'PERMITIDO' : 'NO PERMITIDO'}` :
+                                'Error consultando acceso'
+                        };
+                    }
+                },
+                {
+                    id: 3,
+                    title: '3. Otorgar Acceso (30 días)',
+                    details: 'Concediendo acceso por 30 días al indicador',
+                    run: async () => {
+                        const result = await testRequest('POST', `/access/${username}`, {
+                            indicator_id: indicatorId,
+                            days: 30
+                        });
+                        return {
+                            success: result.ok && result.data?.success,
+                            message: result.ok ? 
+                                (result.data?.success ? 'Acceso otorgado correctamente' : result.data?.error || 'Error') :
+                                'Error otorgando acceso'
+                        };
+                    }
+                },
+                {
+                    id: 4,
+                    title: '4. Verificar Acceso Otorgado',
+                    details: 'Confirmando que el acceso fue concedido',
+                    run: async () => {
+                        const result = await testRequest('GET', `/access/${username}`);
+                        return {
+                            success: result.ok && result.data?.has_access,
+                            message: result.ok ? 
+                                (result.data?.has_access ? 'Acceso confirmado ✓' : 'Acceso NO confirmado') :
+                                'Error verificando acceso'
+                        };
+                    }
+                },
+                {
+                    id: 5,
+                    title: '5. Revocar Acceso',
+                    details: 'Removiendo acceso al indicador',
+                    run: async () => {
+                        const result = await testRequest('DELETE', `/access/${username}`, {
+                            indicator_id: indicatorId
+                        });
+                        return {
+                            success: result.ok && result.data?.success,
+                            message: result.ok ?
+                                (result.data?.success ? 'Acceso revocado correctamente' : result.data?.error || 'Error') :
+                                'Error revocando acceso'
+                        };
+                    }
+                },
+                {
+                    id: 6,
+                    title: '6. Verificar Acceso Revocado',
+                    details: 'Confirmando que el acceso fue removido',
+                    run: async () => {
+                        const result = await testRequest('GET', `/access/${username}`);
+                        return {
+                            success: result.ok && !result.data?.has_access,
+                            message: result.ok ?
+                                (!result.data?.has_access ? 'Revocación confirmada ✓' : 'Acceso AÚN PRESENTE') :
+                                'Error verificando revocación'
+                        };
+                    }
+                }
+            ];
+            
+            // Crear todos los steps
+            for (const test of tests) {
+                const step = createTestStep(test.id, test.title, test.details);
+                testSteps.appendChild(step);
+            }
+            
+            let passedTests = 0;
+            
+            // Ejecutar las pruebas una por una
+            for (const test of tests) {
+                updateTestStep(test.id, 'running', '⏳', 'Ejecutando...');
+                
+                try {
+                    const result = await test.run();
+                    
+                    if (result.success) {
+                        updateTestStep(test.id, 'success', '✅', result.message);
+                        passedTests++;
+                    } else {
+                        updateTestStep(test.id, 'error', '❌', result.message);
+                    }
+                    
+                    // Pausa entre pruebas para mejor visualización
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                } catch (error) {
+                    updateTestStep(test.id, 'error', '❌', 'Error de conexión: ' + error.message);
+                }
+            }
+            
+            // Mostrar resumen final
+            const allPassed = passedTests === tests.length;
+            showAlert(
+                allPassed ? 
+                    `🎉 Todas las pruebas pasaron (${passedTests}/${tests.length})` :
+                    `⚠️ ${passedTests}/${tests.length} pruebas pasaron`,
+                allPassed ? 'success' : 'error'
+            );
+        }
+        
+        // Función para limpiar las pruebas
+        function clearTests() {
+            const testResults = document.getElementById('testResults');
+            const testSteps = document.getElementById('testSteps');
+            
+            testResults.style.display = 'none';
+            testSteps.innerHTML = '';
+            
+            document.getElementById('testUsername').value = '';
+            document.getElementById('testIndicatorId').value = '';
+        }
+        
+        // Event listeners para pruebas
+        document.getElementById('runTests').addEventListener('click', runEndpointTests);
+        document.getElementById('clearTests').addEventListener('click', clearTests);
     </script>
 </body>
 </html>
