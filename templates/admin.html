@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - TradingView API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status-card.expired {
+            border-left-color: #dc3545;
+        }
+        
+        .status-card.warning {
+            border-left-color: #ffc107;
+        }
+        
+        .status-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .status-info {
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Panel de Administración</h1>
+            <p>TradingView API - Gestión de Cookies</p>
+        </div>
+        
+        <div class="content">
+            <!-- Estado de las cookies -->
+            <div id="cookieStatus" class="status-card">
+                <div class="status-title">Estado de las Cookies</div>
+                <div class="status-info">
+                    <div id="statusText">Verificando estado...</div>
+                    <div id="statusDetails"></div>
+                </div>
+            </div>
+            
+            <!-- Instrucciones -->
+            <div class="instructions">
+                <h3>📋 Cómo obtener las cookies:</h3>
+                <ol>
+                    <li>Inicia sesión en <strong>TradingView.com</strong></li>
+                    <li>Presiona <code>F12</code> para abrir herramientas de desarrollador</li>
+                    <li>Ve a la pestaña <strong>Application</strong> (o Storage)</li>
+                    <li>En el panel izquierdo, expande <strong>Cookies</strong> → <strong>https://www.tradingview.com</strong></li>
+                    <li>Busca y copia los valores de <code>sessionid</code> y <code>sessionid_sign</code></li>
+                    <li>Pega los valores en los campos de abajo</li>
+                </ol>
+            </div>
+            
+            <!-- Alertas -->
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError" class="alert alert-error"></div>
+            
+            <!-- Indicador de carga -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Procesando...</div>
+            </div>
+            
+            <!-- Formulario -->
+            <form id="cookieForm">
+                <div class="form-group">
+                    <label for="sessionid" class="form-label">Session ID</label>
+                    <input type="text" id="sessionid" name="sessionid" class="form-input" 
+                           placeholder="Ej: txerwkgj3ka2xplgdgl90vx80ta1b0zl" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sessionid_sign" class="form-label">Session ID Sign</label>
+                    <input type="text" id="sessionid_sign" name="sessionid_sign" class="form-input" 
+                           placeholder="Ej: v3:1QvRvbhAGe1mKD2doZNO0xjp6MYisrPvLxCkXEomHAA=" required>
+                </div>
+                
+                <div style="text-align: center;">
+                    <button type="submit" class="btn btn-primary">💾 Actualizar Cookies</button>
+                    <button type="button" id="checkStatus" class="btn btn-secondary">🔄 Verificar Estado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Función para mostrar alertas
+        function showAlert(message, type) {
+            const alertSuccess = document.getElementById('alertSuccess');
+            const alertError = document.getElementById('alertError');
+            
+            alertSuccess.style.display = 'none';
+            alertError.style.display = 'none';
+            
+            if (type === 'success') {
+                alertSuccess.textContent = message;
+                alertSuccess.style.display = 'block';
+            } else {
+                alertError.textContent = message;
+                alertError.style.display = 'block';
+            }
+            
+            setTimeout(() => {
+                alertSuccess.style.display = 'none';
+                alertError.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Función para mostrar/ocultar loading
+        function setLoading(show) {
+            const loading = document.getElementById('loading');
+            const form = document.getElementById('cookieForm');
+            loading.style.display = show ? 'block' : 'none';
+            form.style.opacity = show ? '0.5' : '1';
+        }
+        
+        // Función para actualizar el estado de las cookies
+        async function updateCookieStatus() {
+            try {
+                const response = await fetch('/admin/cookies/status');
+                const data = await response.json();
+                
+                const statusCard = document.getElementById('cookieStatus');
+                const statusText = document.getElementById('statusText');
+                const statusDetails = document.getElementById('statusDetails');
+                
+                statusCard.className = 'status-card';
+                
+                if (data.valid) {
+                    statusCard.classList.add('valid');
+                    statusText.textContent = '✅ Cookies Válidas';
+                    statusDetails.innerHTML = `
+                        <strong>Última verificación:</strong> ${new Date(data.lastCheck).toLocaleString()}<br>
+                        <strong>Balance:</strong> $${data.balance || '0.00'}<br>
+                        <strong>Estado:</strong> Autenticado correctamente
+                    `;
+                } else {
+                    statusCard.classList.add('expired');
+                    statusText.textContent = '❌ Cookies Expiradas o Inválidas';
+                    statusDetails.innerHTML = `
+                        <strong>Error:</strong> ${data.error || 'Sin conexión válida'}<br>
+                        <strong>Acción requerida:</strong> Actualizar cookies manualmente
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const statusCard = document.getElementById('cookieStatus');
+                const statusText = document.getElementById('statusText');
+                const statusDetails = document.getElementById('statusDetails');
+                
+                statusCard.className = 'status-card warning';
+                statusText.textContent = '⚠️ Error de Conexión';
+                statusDetails.textContent = 'No se pudo verificar el estado de las cookies';
+            }
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('cookieForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const sessionid = document.getElementById('sessionid').value;
+            const sessionid_sign = document.getElementById('sessionid_sign').value;
+            
+            if (!sessionid || !sessionid_sign) {
+                showAlert('Por favor, completa ambos campos de cookies', 'error');
+                return;
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch('/admin/cookies/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionid: sessionid,
+                        sessionid_sign: sessionid_sign
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('✅ Cookies actualizadas correctamente', 'success');
+                    // Limpiar formulario
+                    document.getElementById('sessionid').value = '';
+                    document.getElementById('sessionid_sign').value = '';
+                    // Actualizar estado
+                    setTimeout(updateCookieStatus, 1000);
+                } else {
+                    showAlert('❌ Error: ' + (data.error || 'No se pudieron actualizar las cookies'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('❌ Error de conexión al servidor', 'error');
+            }
+            
+            setLoading(false);
+        });
+        
+        // Botón de verificar estado
+        document.getElementById('checkStatus').addEventListener('click', function() {
+            setLoading(true);
+            updateCookieStatus().finally(() => setLoading(false));
+        });
+        
+        // Cargar estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCookieStatus();
+        });
+    </script>
+</body>
+</html>
