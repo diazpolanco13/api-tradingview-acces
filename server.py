@@ -26,7 +26,7 @@ def validate(username):
 def access(username):
   try:
     jsonPayload = request.json or {}
-    pine_ids = jsonPayload.get('pine_ids')
+    pine_ids = jsonPayload.get('pine_ids') or []
     print(jsonPayload)
     print(pine_ids)
     tv = tradingview()
@@ -37,10 +37,11 @@ def access(username):
 
     if request.method == 'POST':
       duration = jsonPayload.get('duration')
-      dNumber = int(duration[:-1])
-      dType = duration[-1:]
-      for access in accessList:
-        tv.add_access(access, dType, dNumber)
+      if duration:
+        dNumber = int(duration[:-1])
+        dType = duration[-1:]
+        for access in accessList:
+          tv.add_access(access, dType, dNumber)
 
     if request.method == 'DELETE':
       for access in accessList:
