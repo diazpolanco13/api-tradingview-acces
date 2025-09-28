@@ -325,11 +325,29 @@ class DashboardService:
         
         stats = db.get_stats()
         
-        # Get expiring soon
-        expiring_accesses = AccesoService.get_expiring_accesses(7)
+        # Get recent activity (last 10 accesses created) with JOINs
+        recent_accesses_query = """
+            SELECT a.*, c.username_tradingview as cliente_username, i.nombre as indicador_nombre,
+                   a.fecha_creacion as fecha_otorgado, a.fecha_fin as fecha_vencimiento
+            FROM accesos a
+            JOIN clientes c ON a.cliente_id = c.id
+            JOIN indicadores i ON a.indicador_id = i.id
+            ORDER BY a.fecha_creacion DESC
+            LIMIT 10
+        """
+        recent_accesses = db.execute_query(recent_accesses_query)
         
-        # Get recent activity (last 10 accesses created)
-        recent_accesses = Acceso.get_all("", ())[:10]
+        # Get expiring soon with JOINs for frontend
+        expiring_query = """
+            SELECT a.*, c.username_tradingview as cliente_username, i.nombre as indicador_nombre,
+                   a.fecha_fin as fecha_vencimiento
+            FROM accesos a
+            JOIN clientes c ON a.cliente_id = c.id  
+            JOIN indicadores i ON a.indicador_id = i.id
+            WHERE a.estado = 'activo' AND a.fecha_fin < datetime('now', '+7 days')
+            ORDER BY a.fecha_fin ASC
+        """
+        expiring_accesses = db.execute_query(expiring_query)
         
         # Top indicators by usage
         top_indicators_query = """
