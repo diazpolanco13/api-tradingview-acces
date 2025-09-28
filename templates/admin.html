@@ -141,6 +141,26 @@
             background: #5a6268;
             transform: translateY(-1px);
         }
+
+        .dashboard-access-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            border: 2px solid transparent;
+        }
+        
+        .dashboard-access-btn:hover {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
         
         .alert {
             padding: 15px;
@@ -244,6 +264,13 @@
             
             <!-- Main Panel (hidden until authenticated) -->
             <div id="mainPanel" class="main-panel">
+                <!-- Dashboard Access Button -->
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <a href="/dashboard" class="dashboard-access-btn">
+                        📊 Ir al Dashboard Completo
+                    </a>
+                </div>
+                
                 <!-- Estado de las cookies -->
                 <div id="cookieStatus" class="status-card">
                     <div class="status-title">Estado de las Cookies</div>
@@ -702,14 +729,12 @@
                             window.location.href = redirectUrl;
                         }, 1000);
                     } else {
-                        // Show dashboard button instead of redirecting
-                        document.getElementById('dashboardBtn').style.display = 'block';
-                        document.getElementById('loginBtn').style.display = 'none';
-                        document.getElementById('adminToken').style.display = 'none';
-                        document.querySelector('label[for="adminToken"]').style.display = 'none';
-                        
-                        // Update message
-                        document.querySelector('.status-info').innerHTML = '✅ Autenticado correctamente. Usa el botón inferior para acceder al dashboard completo.';
+                        // Show main panel (status page) as original
+                        setTimeout(() => {
+                            document.getElementById('loginSection').style.display = 'none';
+                            document.getElementById('mainPanel').style.display = 'block';
+                            updateCookieStatus();
+                        }, 1000);
                     }
                 } else {
                     adminToken = null;
