@@ -224,39 +224,10 @@
         
         <div class="content">
             <!-- Login Section -->
-            <!-- Información del Dashboard -->
-            <div class="status-card" style="border-left-color: #667eea;">
-                <div class="status-title">📊 Dashboard de Administración PineScript Control Access</div>
-                <div class="status-info">
-                    <p style="margin-bottom: 15px;">Una vez autenticado, tendrás acceso a un completo sistema de gestión con las siguientes funcionalidades:</p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                        <div style="background: #f1f3f4; padding: 12px; border-radius: 6px;">
-                            <strong>📈 Gestión de Indicadores</strong><br>
-                            <small>Crear, editar y eliminar indicadores TradingView. Configurar precios y descripciones.</small>
-                        </div>
-                        <div style="background: #f1f3f4; padding: 12px; border-radius: 6px;">
-                            <strong>👥 Gestión de Clientes</strong><br>
-                            <small>Administrar usuarios y sus perfiles. Control completo de la base de clientes.</small>
-                        </div>
-                        <div style="background: #f1f3f4; padding: 12px; border-radius: 6px;">
-                            <strong>🔐 Control de Accesos</strong><br>
-                            <small>Otorgar y revocar accesos a indicadores. Gestión de permisos y vencimientos.</small>
-                        </div>
-                        <div style="background: #f1f3f4; padding: 12px; border-radius: 6px;">
-                            <strong>📊 Dashboard & Estadísticas</strong><br>
-                            <small>Vista general del sistema, métricas y actividad reciente en tiempo real.</small>
-                        </div>
-                    </div>
-                    <div style="background: #e8f5e8; padding: 10px; border-radius: 6px; border-left: 3px solid #28a745;">
-                        <strong>✨ Interfaz Web Moderna:</strong> Notificaciones elegantes, modales profesionales y navegación intuitiva
-                    </div>
-                </div>
-            </div>
-
             <div id="loginSection" class="login-section">
-                <div class="status-title">🔐 Autenticación Requerida</div>
+                <div class="status-title">🔐 PineScript Control Access</div>
                 <div class="status-info" style="margin-bottom: 15px;">
-                    Ingresa el token de administrador para acceder al panel de control completo.
+                    Sistema de gestión para indicadores TradingView. Ingresa tu token de administrador para acceder.
                 </div>
                 <div class="form-group">
                     <label for="adminToken" class="form-label">Token de Administrador</label>
@@ -264,8 +235,10 @@
                            placeholder="Ingresa el token de administrador">
                 </div>
                 <button id="loginBtn" class="btn btn-primary">🚀 Acceder al Panel</button>
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 14px;">
-                    <strong>💡 Consejo:</strong> Una vez autenticado, serás redirigido automáticamente al Dashboard completo con todas las funcionalidades mostradas arriba.
+                <div style="margin-top: 15px; text-align: center;">
+                    <button id="dashboardBtn" class="btn btn-secondary" style="display: none;" onclick="window.location.href='/dashboard'">
+                        📊 Ir al Dashboard
+                    </button>
                 </div>
             </div>
             
@@ -717,22 +690,27 @@
                     adminToken = token;
                     sessionStorage.setItem('admin_token', token);
                     
-                    showAlert('✅ Autenticación exitosa - Redirigiendo...', 'success');
+                    showAlert('✅ Autenticación exitosa! Puedes acceder al dashboard', 'success');
                     
                     // Check if there's a redirect URL
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectUrl = urlParams.get('redirect');
                     
-                    setTimeout(() => {
-                        if (redirectUrl) {
+                    if (redirectUrl) {
+                        // If there's a redirect, go there immediately
+                        setTimeout(() => {
                             window.location.href = redirectUrl;
-                        } else {
-                            // Show main panel or redirect to dashboard
-                            document.getElementById('loginSection').style.display = 'none';
-                            document.getElementById('mainPanel').style.display = 'block';
-                            updateCookieStatus();
-                        }
-                    }, 1000);
+                        }, 1000);
+                    } else {
+                        // Show dashboard button instead of redirecting
+                        document.getElementById('dashboardBtn').style.display = 'block';
+                        document.getElementById('loginBtn').style.display = 'none';
+                        document.getElementById('adminToken').style.display = 'none';
+                        document.querySelector('label[for="adminToken"]').style.display = 'none';
+                        
+                        // Update message
+                        document.querySelector('.status-info').innerHTML = '✅ Autenticado correctamente. Usa el botón inferior para acceder al dashboard completo.';
+                    }
                 } else {
                     adminToken = null;
                     showAlert('❌ Token inválido', 'error');
