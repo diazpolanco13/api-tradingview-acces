@@ -58,7 +58,7 @@ def get_clients():
         if search_term:
             clients = ClienteService.search_clients(search_term)
         else:
-            clients = ClienteService.get_all_clients()
+            clients = ClienteService.get_active_clients()
         
         return jsonify({
             'success': True,

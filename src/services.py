@@ -118,8 +118,10 @@ class ClienteService:
     
     @staticmethod
     def search_clients(term: str) -> List[Dict[str, Any]]:
-        """Search clients"""
-        return Cliente.search(term)
+        """Search clients (only active)"""
+        # Search only among active clients
+        all_results = Cliente.search(term)
+        return [client for client in all_results if client.get('estado') == 'activo']
     
     @staticmethod
     def get_client_profile(client_id: int) -> Dict[str, Any]:
