@@ -10,8 +10,21 @@ from functools import wraps
 app = Flask('')
 
 # PineScript Control Access - Phase 1 Core Functionality
-# Note: Advanced features temporarily disabled due to dependency conflicts
 print("🚀 PineScript Control Access - Starting core functionality")
+
+# Initialize database and API routes now that dependencies are resolved
+try:
+    from .database import db
+    print("✅ Database module loaded successfully")
+    
+    # Register new API routes
+    from .routes.api_routes import api_bp
+    app.register_blueprint(api_bp)
+    print("✅ New API routes registered successfully")
+    
+except Exception as e:
+    print(f"⚠️ Advanced features failed to load: {e}")
+    print("   Legacy API endpoints remain available")
 
 # Disable access logging for production to prevent username leakage
 if os.getenv('ENV') == 'production':
