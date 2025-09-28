@@ -25,6 +25,44 @@
         .table th { background: #f8f9fa; font-weight: 600; }
         .loading { text-align: center; padding: 40px; color: #666; }
         .price { color: #28a745; font-weight: bold; }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            margin-right: 5px;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -81,6 +119,36 @@
         </div>
     </div>
 
+    <!-- Modal para editar indicador -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>✏️ Editar Indicador</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                
+                <div class="form-group">
+                    <label for="editNombre">Nombre:</label>
+                    <input type="text" class="form-input" id="editNombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPrecio">Precio (USD):</label>
+                    <input type="number" class="form-input" id="editPrecio" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDescripcion">Descripción:</label>
+                    <input type="text" class="form-input" id="editDescripcion">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">✅ Guardar Cambios</button>
+                    <button type="button" class="btn" onclick="closeEditModal()">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         async function loadIndicators() {
             try {
@@ -133,7 +201,13 @@
                                 <td>${indicator.descripcion || 'N/A'}</td>
                                 <td>${new Date(indicator.fecha_creacion).toLocaleDateString()}</td>
                                 <td>
-                                    <button class="btn btn-danger" onclick="deleteIndicator(${indicator.id})">🗑️ Eliminar</button>
+                                    <button class="btn btn-primary edit-btn" 
+                                            data-id="${indicator.id}" 
+                                            data-nombre="${indicator.nombre}" 
+                                            data-precio="${indicator.precio}" 
+                                            data-descripcion="${indicator.descripcion || ''}">✏️ Editar</button>
+                                    <button class="btn btn-danger delete-btn" 
+                                            data-id="${indicator.id}">🗑️ Eliminar</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -207,8 +281,68 @@
             }
         }
 
+        function editIndicator(button) {
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const precio = button.getAttribute('data-precio');
+            const descripcion = button.getAttribute('data-descripcion');
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editPrecio').value = precio || 0;
+            document.getElementById('editDescripcion').value = descripcion || '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function updateIndicator(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('editId').value;
+            const formData = {
+                nombre: document.getElementById('editNombre').value,
+                precio: parseFloat(document.getElementById('editPrecio').value) || 0,
+                descripcion: document.getElementById('editDescripcion').value || null
+            };
+            
+            try {
+                const response = await fetch(`/api/v1/indicators/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update indicator');
+                
+                alert('✅ Indicador actualizado exitosamente');
+                closeEditModal();
+                loadIndicators();
+            } catch (error) {
+                console.error('Error updating indicator:', error);
+                alert('❌ Error actualizando indicador');
+            }
+        }
+
+        // Event delegation for edit and delete buttons
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('edit-btn')) {
+                editIndicator(event.target);
+            }
+            if (event.target.classList.contains('delete-btn')) {
+                const id = event.target.getAttribute('data-id');
+                deleteIndicator(id);
+            }
+        });
+
         // Event listeners
         document.getElementById('indicatorForm').addEventListener('submit', createIndicator);
+        document.getElementById('editForm').addEventListener('submit', updateIndicator);
 
         // Load indicators on page load
         document.addEventListener('DOMContentLoaded', loadIndicators);

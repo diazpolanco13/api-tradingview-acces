@@ -217,7 +217,28 @@ def update_indicator(indicator_id):
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
-        success = IndicadorService.update_indicator(indicator_id, **data)
+        # Allowlist only editable fields for security
+        allowed_fields = {'nombre', 'precio', 'descripcion'}
+        filtered_data = {k: v for k, v in data.items() if k in allowed_fields}
+        
+        if not filtered_data:
+            return jsonify({'error': 'No valid fields provided'}), 400
+        
+        # Validate precio if provided
+        if 'precio' in filtered_data:
+            try:
+                precio = float(filtered_data['precio'])
+                if precio < 0:
+                    return jsonify({'error': 'Price must be non-negative'}), 400
+                filtered_data['precio'] = precio
+            except (ValueError, TypeError):
+                return jsonify({'error': 'Invalid price format'}), 400
+        
+        # Auto-update timestamp
+        from datetime import datetime
+        filtered_data['ultima_actualizacion'] = datetime.now().isoformat()
+        
+        success = IndicadorService.update_indicator(indicator_id, **filtered_data)
         
         if success:
             return jsonify({'success': True, 'message': 'Indicator updated successfully'})
