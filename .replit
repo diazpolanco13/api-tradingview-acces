@@ -33,10 +33,6 @@ integrations = ["github:1.0.0"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 34267
-externalPort = 3000
-
 [workflows]
 runButton = "Project"
 
@@ -55,7 +51,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "poetry run python main.py"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
