@@ -59,6 +59,14 @@ Date manipulation utilities for extending user access periods using relativedelt
 
 # Recent Updates
 
+## September 28, 2025 - Compact Home & Enhanced User Experience
+- **Compact Home Interface**: Simplified root route (/) showing only essential login elements instead of overwhelming dashboard preview
+- **Status Page Integration**: After authentication, users land on the comprehensive system status page with connection testing tools
+- **Dashboard Access Button**: Prominent green button added to status page for direct dashboard navigation
+- **Streamlined Flow**: Clean progression from compact home → status/testing page → full dashboard
+- **User-Friendly Design**: No need for manual URL entry - intuitive button navigation throughout system
+- **Professional UX**: Maintains all functionality while improving initial user experience
+
 ## September 28, 2025 - Web Navigation System Implemented
 - **Session-Based Authentication**: Implemented Flask session authentication alongside existing token system
 - **Web Routes**: Added navigable routes (/dashboard, /clients, /indicators, /access) with automatic login protection
