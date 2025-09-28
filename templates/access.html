@@ -81,8 +81,10 @@
                         <input type="text" class="form-input" id="check_username" placeholder="Ingresa el username" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Pub ID:</label>
-                        <input type="text" class="form-input" id="check_pub_id" placeholder="PUB;abc123..." required>
+                        <label class="form-label">Indicador:</label>
+                        <select class="form-select" id="check_indicator_id" required>
+                            <option value="">Seleccionar indicador...</option>
+                        </select>
                     </div>
                     <div>
                         <button type="submit" class="btn">🔍 Verificar</button>
@@ -144,9 +146,22 @@
                 data.data.forEach(indicator => {
                     const option = document.createElement('option');
                     option.value = indicator.id;
-                    option.textContent = `${indicator.nombre} - $${indicator.precio}`;
+                    option.textContent = `${indicator.nombre} - ${indicator.version}`;
                     select.appendChild(option);
                 });
+                
+                // También cargar en el dropdown de verificación
+                const checkSelect = document.getElementById('check_indicator_id');
+                if (checkSelect) {
+                    checkSelect.innerHTML = '<option value="">Seleccionar indicador...</option>';
+                    data.data.forEach(indicator => {
+                        const option = document.createElement('option');
+                        option.value = indicator.id;
+                        option.setAttribute('data-pub-id', indicator.pub_id);
+                        option.textContent = `${indicator.nombre} - ${indicator.version}`;
+                        checkSelect.appendChild(option);
+                    });
+                }
             } catch (error) {
                 console.error('Error loading indicators:', error);
             }
@@ -257,9 +272,14 @@
         async function checkAccess(event) {
             event.preventDefault();
             
+            // Obtener el pub_id del indicador seleccionado
+            const indicatorSelect = document.getElementById('check_indicator_id');
+            const selectedOption = indicatorSelect.options[indicatorSelect.selectedIndex];
+            const pub_id = selectedOption.getAttribute('data-pub-id');
+            
             const formData = {
                 username_tradingview: document.getElementById('check_username').value,
-                pub_id: document.getElementById('check_pub_id').value
+                pub_id: pub_id
             };
             
             try {
