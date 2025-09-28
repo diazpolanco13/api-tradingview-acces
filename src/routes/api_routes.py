@@ -351,3 +351,62 @@ def process_expired():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Token validation endpoints
+@api_bp.route("/validate-token", methods=["POST", "GET"])
+def validate_token():
+    """Validate admin token and provide clear feedback"""
+    import os
+    
+    # Get token from header or JSON body
+    admin_token = request.headers.get("X-Admin-Token")
+    if not admin_token and request.method == "POST":
+        data = request.get_json() or {}
+        admin_token = data.get("token")
+    
+    expected_token = os.getenv("ADMIN_TOKEN")
+    
+    if not expected_token:
+        return jsonify({
+            "valid": False,
+            "error": "Server misconfigured - ADMIN_TOKEN not set",
+            "message": "Contacta al administrador del sistema"
+        }), 500
+    
+    if not admin_token:
+        return jsonify({
+            "valid": False,
+            "error": "No token provided",
+            "message": "Incluye el token en el header X-Admin-Token o en el body como \"token\""
+        }), 400
+    
+    if admin_token == expected_token:
+        return jsonify({
+            "valid": True,
+            "message": "✅ Token válido - Acceso autorizado",
+            "permissions": ["dashboard", "clients", "indicators", "access_management"]
+        })
+    else:
+        return jsonify({
+            "valid": False,
+            "error": "Invalid token",
+            "message": "❌ Token inválido - Acceso denegado",
+            "hint": f"Token recibido: {admin_token[:12]}... (truncado por seguridad)"
+        }), 401
+
+@api_bp.route("/get-token", methods=["GET"])
+def get_current_token():
+    """Get current admin token (development only)"""
+    import os
+    if os.getenv("ENV") == "production":
+        return jsonify({"error": "Token access disabled in production"}), 403
+    
+    token = os.getenv("ADMIN_TOKEN")
+    if token:
+        return jsonify({
+            "token": token,
+            "message": "Use this token in X-Admin-Token header for admin operations"
+        })
+    else:
+        return jsonify({"error": "No token found"}), 404
+
