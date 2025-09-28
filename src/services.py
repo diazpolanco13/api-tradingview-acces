@@ -425,10 +425,6 @@ class AccesoService:
             
             # Use the exact same method that works in flat access
             all_accesses = Acceso.get_active_accesses()
-            print(f"DEBUG: Retrieved {len(all_accesses)} accesses from Acceso.get_active_accesses()")
-            if all_accesses:
-                print(f"DEBUG: First access keys: {list(all_accesses[0].keys())}")
-                print(f"DEBUG: First access data: {all_accesses[0]}")
             
             # Group accesses by client (using Spanish field names from DB)
             clients_dict = {}
