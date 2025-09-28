@@ -9,11 +9,12 @@ class IndicadorService:
     """Service for managing indicators"""
     
     @staticmethod
-    def create_indicator(nombre: str, pub_id: str, version: str = "1.0", descripcion: str = "") -> int:
+    def create_indicator(nombre: str, pub_id: str, precio: float = 0.0, version: str = "1.0", descripcion: str = "") -> int:
         """Create a new indicator"""
         return Indicador.create(
             nombre=nombre,
             pub_id=pub_id,
+            precio=precio,
             version=version,
             descripcion=descripcion
         )

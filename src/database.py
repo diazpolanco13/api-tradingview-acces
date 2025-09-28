@@ -25,6 +25,8 @@ class Database:
     def init_database(self):
         """Initialize database with all tables"""
         with self.get_connection() as conn:
+            # Migrate existing tables - Add precio column if it doesn't exist
+            self._migrate_add_precio_column(conn)
             # Create Indicadores table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS indicadores (
@@ -32,6 +34,7 @@ class Database:
                     nombre VARCHAR(200) NOT NULL,
                     version VARCHAR(50) DEFAULT '1.0',
                     pub_id VARCHAR(100) UNIQUE NOT NULL,
+                    precio DECIMAL(10,2) DEFAULT 0.00,
                     descripcion TEXT,
                     estado VARCHAR(20) DEFAULT 'activo',
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -78,6 +81,20 @@ class Database:
             
             conn.commit()
             print("✅ Database initialized successfully")
+    
+    def _migrate_add_precio_column(self, conn):
+        """Add precio column to indicadores table if it doesn't exist"""
+        try:
+            # Check if precio column exists
+            cursor = conn.execute("PRAGMA table_info(indicadores)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'precio' not in columns:
+                print("🔄 Adding precio column to indicadores table...")
+                conn.execute("ALTER TABLE indicadores ADD COLUMN precio DECIMAL(10,2) DEFAULT 0.00")
+                print("✅ Added precio column successfully")
+        except Exception as e:
+            print(f"⚠️ Migration warning (precio column): {e}")
     
     def execute_query(self, query: str, params: tuple = ()) -> List[Dict[str, Any]]:
         """Execute a SELECT query and return results as list of dicts"""

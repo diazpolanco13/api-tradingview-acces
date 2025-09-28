@@ -176,6 +176,7 @@ def create_indicator():
         indicator_id = IndicadorService.create_indicator(
             nombre=data['nombre'],
             pub_id=data['pub_id'],
+            precio=float(data.get('precio', 0.0)),
             version=data.get('version', '1.0'),
             descripcion=data.get('descripcion', '')
         )

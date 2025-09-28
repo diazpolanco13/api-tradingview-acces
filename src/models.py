@@ -72,7 +72,7 @@ class Indicador(BaseModel):
     @classmethod
     def _filter_columns(cls, **kwargs) -> Dict[str, Any]:
         valid_columns = {
-            'nombre', 'version', 'pub_id', 'descripcion', 'estado', 'ultima_actualizacion'
+            'nombre', 'version', 'pub_id', 'precio', 'descripcion', 'estado', 'ultima_actualizacion'
         }
         return {k: v for k, v in kwargs.items() if k in valid_columns}
     
