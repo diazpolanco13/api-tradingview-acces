@@ -11,6 +11,8 @@
 ## 🌟 **What's New in v2**
 
 ### 🎯 **Major Enhancements**
+- ✅ **Bulk Access Management** - Grant access to all indicators simultaneously with one click
+- ✅ **Grouped User Interface** - View users with expandable indicator lists instead of repetitive entries
 - ✅ **Secure Web Admin Panel** - Professional interface with token-based authentication
 - ✅ **Compact Home Interface** - Streamlined login page without overwhelming details
 - ✅ **Intuitive Navigation Flow** - Login → Status Page → Dashboard access with prominent button
@@ -103,6 +105,18 @@ python main.py
 - **Real-time Status**: Live indicator of authentication state
 - **Persistent Storage**: Cookies survive application restarts via local JSON files
 - **Migration Note**: When upgrading from v1, cookies need to be re-entered once via admin panel
+
+### **Access Management Interface** 🆕
+**Individual vs Bulk Access Modes**:
+- **Individual Mode**: Traditional one-by-one indicator access management
+- **Bulk Mode**: Grant access to all indicators simultaneously with one click
+- **Toggle Interface**: Radio buttons allow switching between modes seamlessly
+
+**Grouped User View**:
+- **User Grouping**: View access organized by users instead of repetitive individual entries
+- **Expandable Lists**: Click to expand/collapse each user's indicator list
+- **Status Summary**: Quick overview of active, expired, and expiring indicators per user
+- **Efficient Management**: Reduces visual clutter and improves navigation
 
 ### **Endpoint Testing**
 Six individual test buttons for complete API validation:
@@ -201,6 +215,80 @@ X-Admin-Token: tvapi-your-admin-token
 }
 ```
 
+#### **`POST /api/v1/access/bulk`** 🆕
+Grant access to all active indicators for a user simultaneously.
+
+**Headers:**
+```
+X-Admin-Token: tvapi-your-admin-token
+Content-Type: application/json
+```
+
+**Payload:**
+```json
+{
+    "username_tradingview": "user123",
+    "days": 30
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Bulk access granted successfully",
+    "details": {
+        "successful": 5,
+        "failed": 0,
+        "total_indicators": 5,
+        "results": [
+            {
+                "indicator": "Strategy #1",
+                "status": "success",
+                "message": "Access granted"
+            }
+        ]
+    }
+}
+```
+
+#### **`GET /api/v1/access/grouped`** 🆕
+Get access information grouped by users with expandable indicator lists.
+
+**Headers:**
+```
+X-Admin-Token: tvapi-your-admin-token
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "client_id": 1,
+            "username_tradingview": "user123",
+            "nombre_completo": "John Doe",
+            "email": "john@example.com",
+            "indicators_count": 3,
+            "active_indicators": 2,
+            "expired_indicators": 1,
+            "expiring_indicators": 0,
+            "indicators": [
+                {
+                    "indicator_id": 1,
+                    "indicator_name": "Strategy #1",
+                    "pub_id": "PUB;abc123...",
+                    "status": "active",
+                    "fecha_inicio": "2025-09-28",
+                    "fecha_fin": "2025-10-28"
+                }
+            ]
+        }
+    ]
+}
+```
+
 ---
 
 ## 🔒 **Security Features**
@@ -275,9 +363,10 @@ sessionid, sessionid_sign, timestamp = cookie_manager.load_cookies()  # Loads fr
 
 ### **For Script Vendors**
 - **Automated Access Management**: Grant/revoke access programmatically
-- **Subscription Handling**: Integrate with payment systems
+- **Bulk Access Operations**: Grant access to all indicators with one click per user
+- **Subscription Handling**: Integrate with payment systems for seamless automation
 - **User Validation**: Verify customers before processing
-- **Bulk Operations**: Manage multiple users efficiently
+- **Efficient User Management**: Grouped interface reduces repetitive tasks
 
 ### **For Developers**
 - **API Integration**: RESTful endpoints for external systems
