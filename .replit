@@ -33,6 +33,10 @@ integrations = ["github:1.0.0"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 39827
+externalPort = 3000
+
 [workflows]
 runButton = "Project"
 
