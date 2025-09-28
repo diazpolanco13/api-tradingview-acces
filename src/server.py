@@ -173,6 +173,12 @@ def admin_panel():
   return render_template('admin.html')
 
 
+@app.route('/doc')
+def documentation():
+  # Public documentation endpoint
+  return render_template('documentation.html')
+
+
 @app.route('/admin/cookies/status', methods=['GET'])
 @require_admin_token
 def check_cookies_status():

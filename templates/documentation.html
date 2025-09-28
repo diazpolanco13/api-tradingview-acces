@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación API - TradingView Access Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            border-radius: 12px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .nav {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #34495e;
+            font-size: 22px;
+            margin: 25px 0 15px 0;
+        }
+        
+        .endpoint {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .endpoint-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            margin-right: 15px;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .method.get { background: #28a745; }
+        .method.post { background: #007bff; }
+        .method.delete { background: #dc3545; }
+        
+        .endpoint-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .description {
+            margin: 15px 0;
+            color: #666;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .code-inline {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+        }
+        
+        .auth-required {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .response-example {
+            margin: 15px 0;
+        }
+        
+        .response-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .parameter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .parameter-table th,
+        .parameter-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .parameter-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .parameter-table code {
+            background: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .security-note {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .security-note strong {
+            color: #004085;
+        }
+        
+        .status-codes {
+            margin: 15px 0;
+        }
+        
+        .status-code {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-200 { background: #d4edda; color: #155724; }
+        .status-400 { background: #f8d7da; color: #721c24; }
+        .status-401 { background: #f8d7da; color: #721c24; }
+        .status-500 { background: #f8d7da; color: #721c24; }
+        
+        @media (max-width: 768px) {
+            .nav ul {
+                flex-direction: column;
+            }
+            
+            .endpoint-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .method {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 TradingView Access Management API</h1>
+            <p>Documentación completa para gestión de acceso a scripts de TradingView</p>
+        </div>
+        
+        <div class="nav">
+            <ul>
+                <li><a href="#introduccion">Introducción</a></li>
+                <li><a href="#autenticacion">Autenticación</a></li>
+                <li><a href="#endpoints">Endpoints</a></li>
+                <li><a href="#ejemplos">Ejemplos de Uso</a></li>
+                <li><a href="#codigos-error">Códigos de Error</a></li>
+                <li><a href="#admin-panel">Panel de Admin</a></li>
+            </ul>
+        </div>
+
+        <!-- Introducción -->
+        <div class="section" id="introduccion">
+            <h2>📚 Introducción</h2>
+            <p>Esta API REST permite a los vendedores de scripts de TradingView gestionar el acceso de usuarios a sus publicaciones de Pine Script de forma programática. La API proporciona endpoints para validar nombres de usuario, verificar niveles de acceso actuales y modificar permisos de usuario.</p>
+            
+            <h3>Características principales:</h3>
+            <ul>
+                <li><strong>Validación de usuarios:</strong> Verificar si un usuario existe en TradingView</li>
+                <li><strong>Gestión de acceso:</strong> Otorgar, verificar y revocar acceso a indicadores específicos</li>
+                <li><strong>Seguridad robusta:</strong> Autenticación por token para operaciones administrativas</li>
+                <li><strong>Panel web:</strong> Interfaz gráfica para administración de cookies</li>
+            </ul>
+            
+            <div class="security-note">
+                <strong>⚠️ Requisitos:</strong> Se requiere una suscripción Premium de TradingView para que funcione correctamente.
+            </div>
+        </div>
+
+        <!-- Autenticación -->
+        <div class="section" id="autenticacion">
+            <h2>🔐 Autenticación</h2>
+            <p>Los endpoints protegidos requieren autenticación mediante token de administrador en el header de la solicitud.</p>
+            
+            <h3>Header requerido:</h3>
+            <div class="code-block">X-Admin-Token: tu-token-de-administrador-aqui</div>
+            
+            <div class="security-note">
+                <strong>🛡️ Seguridad:</strong> El token se genera automáticamente al iniciar el servidor y se muestra en los logs. En producción, configura la variable de entorno <code>ADMIN_TOKEN</code>.
+            </div>
+        </div>
+
+        <!-- Endpoints -->
+        <div class="section" id="endpoints">
+            <h2>🔌 Endpoints Disponibles</h2>
+
+            <!-- Endpoint 1: Health Check -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/</span>
+                </div>
+                <div class="description">Verificar que el servicio está funcionando correctamente.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta:</div>
+                    <div class="code-block">Your bot is alive!</div>
+                </div>
+                
+                <div class="status-codes">
+                    <span class="status-code status-200">200 OK</span>
+                </div>
+            </div>
+
+            <!-- Endpoint 2: Validar Usuario -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/validate/{username}</span>
+                </div>
+                <div class="description">Validar si un nombre de usuario existe en TradingView. Este endpoint es público y no requiere autenticación.</div>
+                
+                <table class="parameter-table">
+                    <thead>
+                        <tr>
+                            <th>Parámetro</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>username</code></td>
+                            <td>string</td>
+                            <td>Nombre de usuario de TradingView a validar</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo de solicitud:</div>
+                    <div class="code-block">GET /validate/tradingview_user</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta exitosa:</div>
+                    <div class="code-block">{
+  "validuser": true,
+  "verifiedUserName": "tradingview_user"
+}</div>
+                </div>
+                
+                <div class="status-codes">
+                    <span class="status-code status-200">200 OK</span>
+                    <span class="status-code status-500">500 Error</span>
+                </div>
+            </div>
+
+            <!-- Endpoint 3: Gestión de Acceso -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="method post">POST</span>
+                    <span class="method delete">DELETE</span>
+                    <span class="endpoint-url">/access/{username}</span>
+                </div>
+                
+                <div class="auth-required">
+                    🔒 <strong>Autenticación requerida:</strong> Este endpoint requiere el header <code>X-Admin-Token</code>
+                </div>
+                
+                <div class="description">Gestionar el acceso de usuarios a indicadores específicos.</div>
+
+                <h3>GET - Verificar Acceso</h3>
+                <div class="description">Verificar si un usuario tiene acceso a un indicador específico.</div>
+                
+                <table class="parameter-table">
+                    <thead>
+                        <tr>
+                            <th>Parámetro</th>
+                            <th>Ubicación</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>username</code></td>
+                            <td>URL</td>
+                            <td>string</td>
+                            <td>Nombre de usuario</td>
+                        </tr>
+                        <tr>
+                            <td><code>indicator_id</code></td>
+                            <td>Query param</td>
+                            <td>string</td>
+                            <td>ID del indicador (ej: PUB;abcd1234efgh5678)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo:</div>
+                    <div class="code-block">GET /access/usuario123?indicator_id=PUB;abcd1234efgh5678
+Headers: X-Admin-Token: tu-token-aqui</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta:</div>
+                    <div class="code-block">{
+  "username": "usuario123",
+  "has_access": true,
+  "status": "checked",
+  "indicator_id": "PUB;abcd1234efgh5678",
+  "expiration": "2024-02-15T10:30:00Z",
+  "no_expiration": false
+}</div>
+                </div>
+
+                <h3>POST - Otorgar Acceso</h3>
+                <div class="description">Conceder acceso a un usuario por un período específico.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Cuerpo de la solicitud:</div>
+                    <div class="code-block">{
+  "indicator_id": "PUB;abcd1234efgh5678",
+  "days": 30
+}</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo completo:</div>
+                    <div class="code-block">POST /access/usuario123
+Headers: 
+  Content-Type: application/json
+  X-Admin-Token: tu-token-aqui
+Body:
+{
+  "indicator_id": "PUB;abcd1234efgh5678",
+  "days": 30
+}</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta:</div>
+                    <div class="code-block">{
+  "success": true,
+  "message": "Access granted for 30 days"
+}</div>
+                </div>
+
+                <h3>DELETE - Revocar Acceso</h3>
+                <div class="description">Remover el acceso de un usuario a un indicador específico.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Cuerpo de la solicitud:</div>
+                    <div class="code-block">{
+  "indicator_id": "PUB;abcd1234efgh5678"
+}</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta:</div>
+                    <div class="code-block">{
+  "success": true,
+  "message": "Access revoked"
+}</div>
+                </div>
+                
+                <div class="status-codes">
+                    <span class="status-code status-200">200 OK</span>
+                    <span class="status-code status-400">400 Bad Request</span>
+                    <span class="status-code status-401">401 Unauthorized</span>
+                    <span class="status-code status-500">500 Error</span>
+                </div>
+            </div>
+
+            <!-- Panel de Admin -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/admin</span>
+                </div>
+                <div class="description">Interfaz web para administración del sistema y gestión de cookies de TradingView.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Acceso:</div>
+                    <div class="code-block">GET /admin</div>
+                </div>
+                
+                <div class="description">
+                    Panel completo con:
+                    <ul>
+                        <li>Autenticación por token</li>
+                        <li>Gestión de cookies de TradingView</li>
+                        <li>Verificación de estado de cuenta</li>
+                        <li>Pruebas de endpoints</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejemplos de Uso -->
+        <div class="section" id="ejemplos">
+            <h2>💡 Ejemplos de Uso Práctico</h2>
+
+            <h3>Ejemplo 1: Flujo completo de gestión de acceso</h3>
+            <div class="code-block"># 1. Verificar que el usuario existe
+curl -X GET "https://tu-dominio.repl.co/validate/usuario123"
+
+# 2. Verificar acceso actual
+curl -X GET "https://tu-dominio.repl.co/access/usuario123?indicator_id=PUB;abc123" \
+  -H "X-Admin-Token: tu-token-aqui"
+
+# 3. Otorgar acceso por 30 días
+curl -X POST "https://tu-dominio.repl.co/access/usuario123" \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: tu-token-aqui" \
+  -d '{
+    "indicator_id": "PUB;abc123",
+    "days": 30
+  }'
+
+# 4. Verificar que el acceso fue otorgado
+curl -X GET "https://tu-dominio.repl.co/access/usuario123?indicator_id=PUB;abc123" \
+  -H "X-Admin-Token: tu-token-aqui"</div>
+
+            <h3>Ejemplo 2: Script Python para automatización</h3>
+            <div class="code-block">import requests
+import json
+
+# Configuración
+BASE_URL = "https://tu-dominio.repl.co"
+ADMIN_TOKEN = "tu-token-aqui"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-Admin-Token": ADMIN_TOKEN
+}
+
+def validate_user(username):
+    response = requests.get(f"{BASE_URL}/validate/{username}")
+    return response.json()
+
+def grant_access(username, indicator_id, days):
+    data = {
+        "indicator_id": indicator_id,
+        "days": days
+    }
+    response = requests.post(
+        f"{BASE_URL}/access/{username}",
+        headers=HEADERS,
+        json=data
+    )
+    return response.json()
+
+def check_access(username, indicator_id):
+    response = requests.get(
+        f"{BASE_URL}/access/{username}?indicator_id={indicator_id}",
+        headers=HEADERS
+    )
+    return response.json()
+
+# Uso
+username = "usuario123"
+indicator_id = "PUB;abc123"
+
+# Validar usuario
+user_valid = validate_user(username)
+print(f"Usuario válido: {user_valid}")
+
+# Otorgar acceso
+if user_valid.get('validuser'):
+    result = grant_access(username, indicator_id, 30)
+    print(f"Acceso otorgado: {result}")
+    
+    # Verificar acceso
+    access_status = check_access(username, indicator_id)
+    print(f"Estado del acceso: {access_status}")</div>
+
+            <h3>Ejemplo 3: JavaScript/Node.js</h3>
+            <div class="code-block">const axios = require('axios');
+
+const API_BASE = 'https://tu-dominio.repl.co';
+const ADMIN_TOKEN = 'tu-token-aqui';
+
+const api = axios.create({
+    baseURL: API_BASE,
+    headers: {
+        'X-Admin-Token': ADMIN_TOKEN,
+        'Content-Type': 'application/json'
+    }
+});
+
+async function manageUserAccess(username, indicatorId) {
+    try {
+        // 1. Validar usuario (no requiere token)
+        const validationResponse = await axios.get(
+            `${API_BASE}/validate/${username}`
+        );
+        console.log('Validación:', validationResponse.data);
+
+        if (!validationResponse.data.validuser) {
+            throw new Error('Usuario no válido');
+        }
+
+        // 2. Otorgar acceso por 30 días
+        const grantResponse = await api.post(`/access/${username}`, {
+            indicator_id: indicatorId,
+            days: 30
+        });
+        console.log('Acceso otorgado:', grantResponse.data);
+
+        // 3. Verificar acceso
+        const checkResponse = await api.get(
+            `/access/${username}?indicator_id=${indicatorId}`
+        );
+        console.log('Estado del acceso:', checkResponse.data);
+
+    } catch (error) {
+        console.error('Error:', error.response?.data || error.message);
+    }
+}
+
+// Uso
+manageUserAccess('usuario123', 'PUB;abc123');</div>
+        </div>
+
+        <!-- Códigos de Error -->
+        <div class="section" id="codigos-error">
+            <h2>⚠️ Códigos de Error</h2>
+            
+            <table class="parameter-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Causa común</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="status-code status-200">200</span></td>
+                        <td>Operación exitosa</td>
+                        <td>Solicitud procesada correctamente</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-code status-400">400</span></td>
+                        <td>Solicitud incorrecta</td>
+                        <td>Formato de datos inválido o parámetros faltantes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-code status-401">401</span></td>
+                        <td>No autorizado</td>
+                        <td>Token de administrador faltante o inválido</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-code status-500">500</span></td>
+                        <td>Error del servidor</td>
+                        <td>Problema con cookies de TradingView o configuración</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Errores comunes y soluciones:</h3>
+            <div class="auth-required">
+                <strong>401 Unauthorized:</strong> Verifica que estés enviando el header <code>X-Admin-Token</code> con el token correcto.
+            </div>
+            
+            <div class="security-note">
+                <strong>500 Server Error:</strong> Usualmente indica que las cookies de TradingView han expirado. Ve al <a href="/admin">panel de administración</a> para actualizarlas.
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div class="section" id="admin-panel">
+            <h2>🛠️ Panel de Administración</h2>
+            <p>El panel de administración web está disponible en <code>/admin</code> y proporciona una interfaz gráfica para:</p>
+            
+            <ul>
+                <li><strong>Gestión de cookies:</strong> Actualizar cookies de TradingView cuando expiren</li>
+                <li><strong>Monitoreo:</strong> Verificar estado de la cuenta y balance</li>
+                <li><strong>Pruebas:</strong> Ejecutar pruebas completas de todos los endpoints</li>
+                <li><strong>Seguridad:</strong> Acceso protegido por token de administrador</li>
+            </ul>
+
+            <div class="response-example">
+                <div class="response-title">Acceso al panel:</div>
+                <div class="code-block">https://tu-dominio.repl.co/admin</div>
+            </div>
+
+            <h3>Configuración de cookies:</h3>
+            <ol>
+                <li>Ve a <a href="https://www.tradingview.com" target="_blank">TradingView.com</a> e inicia sesión</li>
+                <li>Presiona <code>F12</code> para abrir herramientas de desarrollador</li>
+                <li>Ve a la pestaña <strong>Application</strong> > <strong>Cookies</strong></li>
+                <li>Busca <code>sessionid</code> y <code>sessionid_sign</code></li>
+                <li>Copia los valores al panel de administración</li>
+            </ol>
+
+            <div class="security-note">
+                <strong>🔒 Importante:</strong> Las cookies se almacenan de forma segura con permisos restrictivos (600) y son necesarias para que la API funcione correctamente.
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; color: #666;">
+            <p>📚 Documentación generada automáticamente | <a href="/admin">Panel de Administración</a> | <a href="/">Inicio</a></p>
+        </div>
+    </div>
+</body>
+</html>
