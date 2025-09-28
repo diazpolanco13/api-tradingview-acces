@@ -347,17 +347,51 @@ def revoke_access(client_id, indicator_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Maintenance endpoint
-@api_bp.route('/maintenance/expired', methods=['POST'])
+# Bulk access endpoint
+@api_bp.route('/access/bulk', methods=['POST'])
 @require_admin_token
-def process_expired_accesses():
-    """Process expired accesses"""
+def grant_bulk_access():
+    """Grant access to all indicators for a client"""
     try:
-        # This could clean up expired accesses or send notifications
-        # For now, just return success
+        data = request.get_json()
+        
+        required_fields = ['client_id', 'duracion_dias']
+        if not data or not all(field in data for field in required_fields):
+            return jsonify({
+                'error': f'Required fields: {", ".join(required_fields)}'
+            }), 400
+        
+        # Get client details
+        from ..models import Cliente
+        client = Cliente.get_by_id(data['client_id'])
+        
+        if not client:
+            return jsonify({'error': 'Client not found'}), 400
+        
+        result = AccesoService.grant_access_to_all_indicators(
+            username_tradingview=client['username_tradingview'],
+            days=int(data['duracion_dias'])
+        )
+        
+        if result['success']:
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Grouped access view endpoint
+@api_bp.route('/access/grouped', methods=['GET'])
+@require_admin_token
+def get_grouped_accesses():
+    """Get accesses grouped by client"""
+    try:
+        grouped_accesses = AccesoService.get_accesses_grouped_by_client()
+        
         return jsonify({
             'success': True,
-            'message': 'Expired accesses processed successfully'
+            'data': grouped_accesses
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

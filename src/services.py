@@ -314,6 +314,191 @@ class AccesoService:
     def process_expired_accesses() -> int:
         """Process expired accesses and return count"""
         return Acceso.mark_expired()
+    
+    @staticmethod
+    def grant_access_to_all_indicators(username_tradingview: str, days: int) -> Dict[str, Any]:
+        """Grant access to all active indicators for a client"""
+        result = {'success': False, 'message': '', 'granted_count': 0, 'failed_count': 0, 'details': []}
+        
+        try:
+            # Get or create client
+            client = Cliente.get_by_username(username_tradingview)
+            if not client:
+                # Try to create client automatically
+                client_result = ClienteService.create_client(username_tradingview)
+                if not client_result['success']:
+                    result['message'] = f"Cliente no encontrado y no se pudo crear: {client_result['message']}"
+                    return result
+                client = Cliente.get_by_id(client_result['client_id'])
+            
+            # Get all active indicators
+            active_indicators = IndicadorService.get_active_indicators()
+            if not active_indicators:
+                result['message'] = "No se encontraron indicadores activos"
+                return result
+            
+            granted_count = 0
+            failed_count = 0
+            details = []
+            
+            # Grant access to each indicator
+            for indicator in active_indicators:
+                try:
+                    # Check if access already exists
+                    existing = Acceso.get_by_client_and_indicator(client['id'], indicator['id'])
+                    if existing and existing['estado'] == 'activo':
+                        details.append({
+                            'indicator': indicator['nombre'],
+                            'status': 'skipped',
+                            'reason': 'Ya tiene acceso activo'
+                        })
+                        continue
+                    
+                    # Grant access
+                    access_id = Acceso.grant_access(
+                        cliente_id=client['id'],
+                        indicador_id=indicator['id'],
+                        days=days
+                    )
+                    
+                    # Sync with TradingView API
+                    try:
+                        tv = tradingview()
+                        tv_access = tv.get_access_details(username_tradingview, indicator['pub_id'])
+                        
+                        if days == 30:
+                            tv.add_access(tv_access, 'M', 1)  # 1 month
+                        else:
+                            tv.add_access(tv_access, 'd', days)
+                        
+                        granted_count += 1
+                        details.append({
+                            'indicator': indicator['nombre'],
+                            'status': 'granted',
+                            'access_id': access_id
+                        })
+                        
+                    except Exception as tv_error:
+                        # If TV fails, remove the DB access
+                        Acceso.revoke_access(client['id'], indicator['id'])
+                        failed_count += 1
+                        details.append({
+                            'indicator': indicator['nombre'],
+                            'status': 'failed',
+                            'reason': f"Error en TradingView: {str(tv_error)}"
+                        })
+                        
+                except Exception as indicator_error:
+                    failed_count += 1
+                    details.append({
+                        'indicator': indicator['nombre'],
+                        'status': 'failed',
+                        'reason': str(indicator_error)
+                    })
+            
+            result['granted_count'] = granted_count
+            result['failed_count'] = failed_count
+            result['details'] = details
+            
+            if granted_count > 0:
+                result['success'] = True
+                result['message'] = f"Acceso otorgado a {granted_count} indicadores (fallaron: {failed_count})"
+            else:
+                result['message'] = f"No se pudo otorgar acceso a ningún indicador (fallaron: {failed_count})"
+                
+        except Exception as e:
+            result['message'] = f"Error en acceso masivo: {str(e)}"
+        
+        return result
+    
+    @staticmethod
+    def get_accesses_grouped_by_client() -> List[Dict[str, Any]]:
+        """Get accesses grouped by client with indicator details"""
+        # SQLite doesn't support JSON_OBJECT in GROUP_CONCAT, so use the fallback method directly
+        return AccesoService._get_grouped_accesses_fallback()
+    
+    @staticmethod
+    def _get_grouped_accesses_fallback() -> List[Dict[str, Any]]:
+        """Fallback method for grouped accesses using Acceso.get_active_accesses() directly"""
+        try:
+            from datetime import datetime
+            
+            # Use the exact same method that works in flat access
+            all_accesses = Acceso.get_active_accesses()
+            print(f"DEBUG: Retrieved {len(all_accesses)} accesses from Acceso.get_active_accesses()")
+            if all_accesses:
+                print(f"DEBUG: First access keys: {list(all_accesses[0].keys())}")
+                print(f"DEBUG: First access data: {all_accesses[0]}")
+            
+            # Group accesses by client (using Spanish field names from DB)
+            clients_dict = {}
+            for access in all_accesses:
+                cliente_id = access['cliente_id']  # Use Spanish field name from DB
+                
+                if cliente_id not in clients_dict:
+                    clients_dict[cliente_id] = {
+                        'client_id': cliente_id,  # Return as client_id for frontend
+                        'username_tradingview': access['username_tradingview'],
+                        'nombre_completo': access['nombre_completo'],
+                        'email': access.get('email', ''),  # Email might not be in the query
+                        'indicators': []
+                    }
+                
+                # Calculate status
+                status = 'active'
+                if access['fecha_fin']:
+                    try:
+                        # Handle different datetime formats
+                        fecha_fin_str = access['fecha_fin']
+                        if 'T' in fecha_fin_str:
+                            # ISO format like "2025-10-28T11:11:53.083419"
+                            expiry = datetime.fromisoformat(fecha_fin_str.replace('Z', '+00:00'))
+                        else:
+                            # SQLite format like "2025-10-28 11:11:53"
+                            expiry = datetime.strptime(fecha_fin_str, '%Y-%m-%d %H:%M:%S')
+                        
+                        now = datetime.now()
+                        
+                        if expiry < now:
+                            status = 'expired'
+                        elif (expiry - now).days <= 7:
+                            status = 'expiring'
+                    except Exception as e:
+                        status = 'active'  # Default to active if can't parse
+                
+                clients_dict[cliente_id]['indicators'].append({
+                    'indicator_id': access['indicador_id'],
+                    'indicator_name': access['indicador_nombre'],
+                    'indicator_version': access.get('version', '1.0'),  # Get version if available
+                    'pub_id': access['pub_id'],
+                    'access_id': access['id'],
+                    'fecha_inicio': access['fecha_inicio'],
+                    'fecha_fin': access['fecha_fin'],
+                    'estado': access['estado'],
+                    'fecha_creacion': access['fecha_creacion'],
+                    'status': status
+                })
+            
+            # Convert to list and add summary statistics
+            grouped_accesses = []
+            for client_data in clients_dict.values():
+                indicators = client_data['indicators']
+                client_data.update({
+                    'indicators_count': len(indicators),
+                    'active_indicators': len([i for i in indicators if i['status'] == 'active']),
+                    'expiring_indicators': len([i for i in indicators if i['status'] == 'expiring']),
+                    'expired_indicators': len([i for i in indicators if i['status'] == 'expired'])
+                })
+                grouped_accesses.append(client_data)
+            
+            # Sort by username
+            grouped_accesses.sort(key=lambda x: x['username_tradingview'])
+            
+            return grouped_accesses
+            
+        except Exception as e:
+            print(f"Error in fallback grouped accesses: {e}")
+            return []
 
 class DashboardService:
     """Service for dashboard statistics and overview"""

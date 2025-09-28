@@ -165,6 +165,22 @@
 
         <div class="card">
             <h2>➕ Otorgar Nuevo Acceso</h2>
+            
+            <!-- Toggle para tipo de acceso -->
+            <div style="margin-bottom: 20px;">
+                <label class="form-label">Tipo de acceso:</label>
+                <div style="display: flex; gap: 15px; margin-top: 5px;">
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="access_type" value="individual" checked onchange="toggleAccessType()">
+                        <span>📊 Individual (un indicador)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="access_type" value="bulk" onchange="toggleAccessType()">
+                        <span>🎯 Masivo (todos los indicadores)</span>
+                    </label>
+                </div>
+            </div>
+
             <form id="accessForm">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div class="form-group">
@@ -173,7 +189,7 @@
                             <option value="">Seleccionar cliente...</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="indicator_group">
                         <label class="form-label">Indicador:</label>
                         <select class="form-select" id="indicator_id" required>
                             <option value="">Seleccionar indicador...</option>
@@ -184,7 +200,7 @@
                         <input type="number" class="form-input" id="duracion_dias" value="30" min="1" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success">✅ Otorgar Acceso</button>
+                <button type="submit" class="btn btn-success" id="submit_btn">✅ Otorgar Acceso</button>
             </form>
         </div>
 
@@ -211,10 +227,25 @@
         </div>
 
         <div class="card">
-            <h2>📋 Todos los Accesos</h2>
-            <div style="margin-bottom: 20px;">
-                <button class="btn" onclick="loadAccess()">🔄 Recargar</button>
-                <button class="btn btn-warning" onclick="processExpired()">⚠️ Procesar Vencidos</button>
+            <h2>📋 Gestión de Accesos</h2>
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <button class="btn" onclick="loadAccess()">🔄 Recargar</button>
+                    <button class="btn btn-warning" onclick="processExpired()">⚠️ Procesar Vencidos</button>
+                </div>
+                <div>
+                    <label class="form-label" style="margin-bottom: 5px;">Vista:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" name="view_type" value="grouped" checked onchange="toggleViewType()">
+                            <span>👥 Agrupada</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" name="view_type" value="flat" onchange="toggleViewType()">
+                            <span>📋 Lista</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             
             <div id="accessList">
@@ -348,18 +379,24 @@
         }
 
         async function loadAccess() {
-            try {
-                const response = await fetch('/api/v1/access', {
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok) throw new Error('Failed to load access');
-                
-                const data = await response.json();
-                displayAccess(data.data);
-            } catch (error) {
-                console.error('Error loading access:', error);
-                document.getElementById('accessList').innerHTML = '<div class="loading">❌ Error cargando accesos</div>';
+            const viewType = document.querySelector('input[name="view_type"]:checked')?.value || 'grouped';
+            
+            if (viewType === 'grouped') {
+                await loadGroupedAccess();
+            } else {
+                try {
+                    const response = await fetch('/api/v1/access', {
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to load access');
+                    
+                    const data = await response.json();
+                    displayAccess(data.data);
+                } catch (error) {
+                    console.error('Error loading access:', error);
+                    document.getElementById('accessList').innerHTML = '<div class="loading">❌ Error cargando accesos</div>';
+                }
             }
         }
 
@@ -422,30 +459,55 @@
         async function grantAccess(event) {
             event.preventDefault();
             
-            const formData = {
-                client_id: parseInt(document.getElementById('client_id').value),
-                indicator_id: parseInt(document.getElementById('indicator_id').value),
-                duracion_dias: parseInt(document.getElementById('duracion_dias').value)
-            };
+            const accessType = document.querySelector('input[name="access_type"]:checked').value;
+            const clientId = document.getElementById('client_id').value;
+            const days = document.getElementById('duracion_dias').value;
             
-            try {
-                const response = await fetch('/api/v1/access', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify(formData)
-                });
+            if (!clientId || !days) {
+                showNotification('❌ Por favor completa todos los campos requeridos', 'error');
+                return;
+            }
+            
+            if (accessType === 'bulk') {
+                // Bulk access
+                const result = await grantBulkAccess(clientId, days);
+                if (result.success) {
+                    document.getElementById('accessForm').reset();
+                    loadAccess();
+                }
+            } else {
+                // Individual access
+                const indicatorId = document.getElementById('indicator_id').value;
+                if (!indicatorId) {
+                    showNotification('❌ Por favor selecciona un indicador', 'error');
+                    return;
+                }
                 
-                if (!response.ok) throw new Error('Failed to grant access');
+                const formData = {
+                    client_id: parseInt(clientId),
+                    indicator_id: parseInt(indicatorId),
+                    duracion_dias: parseInt(days)
+                };
                 
-                showNotification('✅ Acceso otorgado exitosamente', 'success');
-                document.getElementById('accessForm').reset();
-                loadAccess();
-            } catch (error) {
-                console.error('Error granting access:', error);
-                showNotification('❌ Error otorgando acceso', 'error');
+                try {
+                    const response = await fetch('/api/v1/access', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to grant access');
+                    
+                    showNotification('✅ Acceso otorgado exitosamente', 'success');
+                    document.getElementById('accessForm').reset();
+                    loadAccess();
+                } catch (error) {
+                    console.error('Error granting access:', error);
+                    showNotification('❌ Error otorgando acceso', 'error');
+                }
             }
         }
 
@@ -560,6 +622,233 @@
             } catch (error) {
                 console.error('Error during logout:', error);
                 window.location.href = '/admin';
+            }
+        }
+
+        // NEW FUNCTIONALITY - Bulk Access and Grouped View
+
+        function toggleAccessType() {
+            const accessType = document.querySelector('input[name="access_type"]:checked').value;
+            const indicatorGroup = document.getElementById('indicator_group');
+            const indicatorSelect = document.getElementById('indicator_id');
+            const submitBtn = document.getElementById('submit_btn');
+            
+            if (accessType === 'bulk') {
+                indicatorGroup.style.display = 'none';
+                indicatorSelect.removeAttribute('required');
+                submitBtn.innerHTML = '🎯 Otorgar Acceso a Todos los Indicadores';
+            } else {
+                indicatorGroup.style.display = 'block';
+                indicatorSelect.setAttribute('required', 'true');
+                submitBtn.innerHTML = '✅ Otorgar Acceso';
+            }
+        }
+
+        function toggleViewType() {
+            // Reload access with new view type
+            loadAccess();
+        }
+
+        async function grantBulkAccess(clientId, days) {
+            try {
+                const response = await fetch('/api/v1/access/bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        client_id: parseInt(clientId),
+                        duracion_dias: parseInt(days)
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to grant bulk access');
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`✅ ${data.message}`, 'success');
+                    if (data.details && data.details.length > 0) {
+                        console.log('Detalles del acceso masivo:', data.details);
+                    }
+                } else {
+                    showNotification(`❌ ${data.message}`, 'error');
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Error granting bulk access:', error);
+                showNotification('❌ Error otorgando acceso masivo', 'error');
+                return { success: false, message: 'Error de conexión' };
+            }
+        }
+
+        async function loadGroupedAccess() {
+            try {
+                const response = await fetch('/api/v1/access/grouped', {
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load grouped access');
+                
+                const data = await response.json();
+                displayGroupedAccess(data.data);
+            } catch (error) {
+                console.error('Error loading grouped access:', error);
+                document.getElementById('accessList').innerHTML = '<div class="loading">❌ Error cargando accesos agrupados</div>';
+            }
+        }
+
+        function displayGroupedAccess(groupedAccesses) {
+            if (!groupedAccesses || groupedAccesses.length === 0) {
+                document.getElementById('accessList').innerHTML = '<p>No se encontraron accesos</p>';
+                return;
+            }
+            
+            let html = '<div class="grouped-access-container">';
+            
+            groupedAccesses.forEach(client => {
+                const statusCounts = `${client.active_indicators} activos, ${client.expiring_indicators} por vencer, ${client.expired_indicators} vencidos`;
+                
+                html += `
+                    <div class="client-group" style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                        <div class="client-header" style="background: #f8f9fa; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" 
+                             onclick="toggleClientIndicators('client-${client.client_id}')">
+                            <div>
+                                <strong style="font-size: 16px;">👤 ${client.username_tradingview}</strong>
+                                ${client.nombre_completo ? `<span style="color: #666; margin-left: 10px;">(${client.nombre_completo})</span>` : ''}
+                                <div style="font-size: 14px; color: #666; margin-top: 5px;">
+                                    📊 ${client.indicators_count} indicadores (${statusCounts})
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); revokeAllClientAccess(${client.client_id}, '${client.username_tradingview}')" 
+                                        style="font-size: 12px; padding: 5px 10px;">🚫 Revocar Todo</button>
+                                <span id="toggle-icon-client-${client.client_id}" style="font-size: 18px;">▶️</span>
+                            </div>
+                        </div>
+                        <div id="client-${client.client_id}" class="client-indicators" style="display: none; padding: 0;">
+                            <table class="table" style="margin: 0;">
+                                <thead>
+                                    <tr style="background: #f1f3f4;">
+                                        <th>Indicador</th>
+                                        <th>Fecha Otorgado</th>
+                                        <th>Fecha Vencimiento</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                client.indicators.forEach(indicator => {
+                    let statusClass = 'status-active';
+                    let statusText = '✅ Activo';
+                    let statusIcon = '✅';
+                    
+                    if (indicator.status === 'expired') {
+                        statusClass = 'status-expired';
+                        statusText = '❌ Vencido';
+                        statusIcon = '❌';
+                    } else if (indicator.status === 'expiring') {
+                        statusClass = 'status-expiring';
+                        statusText = '⚠️ Por vencer';
+                        statusIcon = '⚠️';
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${indicator.indicator_name}</strong> v${indicator.indicator_version}</td>
+                            <td>${new Date(indicator.fecha_creacion).toLocaleDateString()}</td>
+                            <td>${indicator.fecha_fin ? new Date(indicator.fecha_fin).toLocaleDateString() : 'Sin límite'}</td>
+                            <td class="${statusClass}">${statusIcon} ${statusText}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="revokeAccess(${client.client_id}, ${indicator.indicator_id})" 
+                                        style="font-size: 12px; padding: 4px 8px;">🚫 Revocar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            document.getElementById('accessList').innerHTML = html;
+        }
+
+        function toggleClientIndicators(clientId) {
+            const indicatorsDiv = document.getElementById(clientId);
+            const toggleIcon = document.getElementById(`toggle-icon-${clientId}`);
+            
+            if (indicatorsDiv.style.display === 'none') {
+                indicatorsDiv.style.display = 'block';
+                toggleIcon.textContent = '▼️';
+            } else {
+                indicatorsDiv.style.display = 'none';
+                toggleIcon.textContent = '▶️';
+            }
+        }
+
+        async function revokeAllClientAccess(clientId, username) {
+            const confirmed = await showConfirmation(
+                '🔒 ¿Revocar TODOS los Accesos?',
+                `¿Estás seguro de revocar TODOS los accesos del cliente "${username}"? Esta acción no se puede deshacer.`
+            );
+            
+            if (!confirmed) return;
+            
+            try {
+                // Get client indicators first
+                const clientData = document.querySelector(`#client-${clientId}`);
+                if (!clientData) return;
+                
+                const indicators = clientData.querySelectorAll('button[onclick*="revokeAccess"]');
+                let revokedCount = 0;
+                let failedCount = 0;
+                
+                for (const button of indicators) {
+                    try {
+                        const onclick = button.getAttribute('onclick');
+                        const match = onclick.match(/revokeAccess\((\d+),\s*(\d+)\)/);
+                        if (match) {
+                            const cId = match[1];
+                            const iId = match[2];
+                            
+                            const response = await fetch(`/api/v1/access/${cId}/${iId}`, {
+                                method: 'DELETE',
+                                credentials: 'same-origin'
+                            });
+                            
+                            if (response.ok) {
+                                revokedCount++;
+                            } else {
+                                failedCount++;
+                            }
+                        }
+                    } catch (error) {
+                        failedCount++;
+                        console.error('Error revoking individual access:', error);
+                    }
+                }
+                
+                if (revokedCount > 0) {
+                    showNotification(`✅ ${revokedCount} accesos revocados exitosamente${failedCount > 0 ? ` (${failedCount} fallaron)` : ''}`, 'success');
+                } else {
+                    showNotification(`❌ No se pudo revocar ningún acceso${failedCount > 0 ? ` (${failedCount} fallaron)` : ''}`, 'error');
+                }
+                
+                loadAccess();
+            } catch (error) {
+                console.error('Error revoking all client access:', error);
+                showNotification('❌ Error revocando accesos del cliente', 'error');
             }
         }
 
