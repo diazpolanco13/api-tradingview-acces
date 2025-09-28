@@ -296,6 +296,65 @@
             <div class="security-note">
                 <strong>🛡️ Seguridad:</strong> El token se genera automáticamente al iniciar el servidor y se muestra en los logs. En producción, configura la variable de entorno <code>ADMIN_TOKEN</code>.
             </div>
+            
+            <h3>🔑 Cómo obtener el token de administración:</h3>
+            
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/api/v1/get-token</span>
+                </div>
+                <div class="description">Obtener el token de administración actual. Solo funciona en modo desarrollo.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo de solicitud:</div>
+                    <div class="code-block">curl "http://localhost:5000/api/v1/get-token"</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta exitosa:</div>
+                    <div class="code-block">{
+  "token": "tvapi-m39H2RnoBHKmqePxBvBdmPZ8Y-i67d7ewsaL3P4xH7Y",
+  "message": "Use this token in X-Admin-Token header for admin operations"
+}</div>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/api/v1/validate-token</span>
+                </div>
+                <div class="description">Validar si un token de administración es válido y obtener permisos.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo de solicitud:</div>
+                    <div class="code-block">curl -H "X-Admin-Token: tu-token-aqui" "http://localhost:5000/api/v1/validate-token"</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta cuando es válido:</div>
+                    <div class="code-block">{
+  "valid": true,
+  "message": "✅ Token válido - Acceso autorizado",
+  "permissions": ["dashboard", "clients", "indicators", "access_management"]
+}</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta cuando es inválido:</div>
+                    <div class="code-block">{
+  "valid": false,
+  "error": "Invalid token",
+  "message": "❌ Token inválido - Acceso denegado",
+  "hint": "Token recibido: token-falso-... (truncado por seguridad)"
+}</div>
+                </div>
+            </div>
+            
+            <div class="auth-required">
+                <strong>💡 Consejo:</strong> Si no tienes acceso al token, puedes obtenerlo fácilmente usando <code>/api/v1/get-token</code> o revisando los logs del servidor al inicio.
+            </div>
         </div>
 
         <!-- Endpoints -->
