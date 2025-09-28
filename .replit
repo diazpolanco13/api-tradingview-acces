@@ -6,7 +6,7 @@ entrypoint = "main.py"
 # A list of globs that specify which files and directories should
 # be hidden in the workspace.
 hidden = ["venv", ".config", "**/__pycache__", "**/.mypy_cache", "**/*.pyc"]
-modules = ["web", "python-3.10"]
+modules = ["web", "python-3.10", "postgresql-16"]
 
 # Specifies which nix channel to use when building the environment.
 [nix]
@@ -34,7 +34,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 34623
+localPort = 42921
 externalPort = 3000
 
 [workflows]

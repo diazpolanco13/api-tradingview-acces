@@ -73,10 +73,29 @@ class ClienteService:
         # Check if client already exists
         existing = Cliente.get_by_username(username_tradingview)
         if existing:
-            result['message'] = 'Cliente ya existe con ese username de TradingView'
-            return result
+            if existing.get('estado') == 'activo':
+                result['message'] = 'Cliente ya existe con ese username de TradingView'
+                return result
+            else:
+                # Reactivate inactive client
+                try:
+                    updated = Cliente.update(existing['id'], 
+                                           estado='activo',
+                                           email=email or existing['email'],
+                                           nombre_completo=nombre_completo or existing['nombre_completo'])
+                    if updated:
+                        result['success'] = True
+                        result['client_id'] = existing['id']
+                        result['message'] = 'Cliente reactivado exitosamente'
+                        return result
+                    else:
+                        result['message'] = 'Error reactivando cliente'
+                        return result
+                except Exception as e:
+                    result['message'] = f'Error reactivating client: {str(e)}'
+                    return result
         
-        # Validate username with TradingView API
+        # Validate username with TradingView API for new clients
         try:
             tv = tradingview()
             validation = tv.validate_username(username_tradingview)
@@ -89,7 +108,7 @@ class ClienteService:
             result['message'] = f'Error validating username: {str(e)}'
             return result
         
-        # Create client
+        # Create new client
         try:
             client_id = Cliente.create(
                 username_tradingview=username_tradingview,
