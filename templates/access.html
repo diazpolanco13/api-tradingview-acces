@@ -189,7 +189,7 @@
                     <tbody>
                         ${accesses.map(access => {
                             const now = new Date();
-                            const expiry = new Date(access.fecha_vencimiento);
+                            const expiry = new Date(access.fecha_fin);
                             const isExpired = expiry < now;
                             const isExpiring = !isExpired && (expiry - now) < 7 * 24 * 60 * 60 * 1000; // 7 days
                             
@@ -206,13 +206,13 @@
                             
                             return `
                                 <tr>
-                                    <td><strong>${access.cliente_username}</strong></td>
+                                    <td><strong>${access.username_tradingview}</strong></td>
                                     <td>${access.indicador_nombre}</td>
-                                    <td>${new Date(access.fecha_otorgado).toLocaleDateString()}</td>
+                                    <td>${new Date(access.fecha_creacion).toLocaleDateString()}</td>
                                     <td>${expiry.toLocaleDateString()}</td>
                                     <td class="${statusClass}">${statusText}</td>
                                     <td>
-                                        <button class="btn btn-danger" onclick="revokeAccess(${access.client_id}, ${access.indicator_id})">🚫 Revocar</button>
+                                        <button class="btn btn-danger" onclick="revokeAccess(${access.cliente_id}, ${access.indicador_id})">🚫 Revocar</button>
                                     </td>
                                 </tr>
                             `;
@@ -289,7 +289,7 @@
                 resultDiv.innerHTML = `
                     <div style="background: #d4edda; padding: 15px; border-radius: 5px; color: #155724;">
                         ✅ <strong>El usuario TIENE acceso</strong><br>
-                        Vence: ${new Date(result.fecha_vencimiento).toLocaleDateString()}
+                        Vence: ${new Date(result.access_details.fecha_fin).toLocaleDateString()}
                     </div>
                 `;
             } else {
