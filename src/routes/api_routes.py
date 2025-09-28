@@ -154,7 +154,7 @@ def get_indicators():
         if search_term:
             indicators = IndicadorService.search_indicators(search_term)
         else:
-            indicators = IndicadorService.get_all_indicators()
+            indicators = IndicadorService.get_active_indicators()
         
         return jsonify({
             'success': True,
