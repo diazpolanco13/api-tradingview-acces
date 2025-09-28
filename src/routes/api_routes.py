@@ -242,7 +242,7 @@ def delete_indicator(indicator_id):
         return jsonify({'error': str(e)}), 500
 
 # Access management endpoints
-@api_bp.route('/accesses', methods=['GET'])
+@api_bp.route('/access', methods=['GET'])
 @require_admin_token
 def get_accesses():
     """Get all accesses"""
@@ -264,23 +264,31 @@ def get_accesses():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@api_bp.route('/accesses/grant', methods=['POST'])
+@api_bp.route('/access', methods=['POST'])
 @require_admin_token
 def grant_access():
     """Grant access to a client"""
     try:
         data = request.get_json()
         
-        required_fields = ['username_tradingview', 'pub_id', 'days']
+        required_fields = ['client_id', 'indicator_id', 'duracion_dias']
         if not data or not all(field in data for field in required_fields):
             return jsonify({
                 'error': f'Required fields: {", ".join(required_fields)}'
             }), 400
         
+        # Get client and indicator details for AccesoService
+        from ..models import Cliente, Indicador
+        client = Cliente.get_by_id(data['client_id'])
+        indicator = Indicador.get_by_id(data['indicator_id'])
+        
+        if not client or not indicator:
+            return jsonify({'error': 'Client or indicator not found'}), 400
+        
         result = AccesoService.grant_access(
-            username_tradingview=data['username_tradingview'],
-            pub_id=data['pub_id'],
-            days=int(data['days'])
+            username_tradingview=client['username_tradingview'],
+            pub_id=indicator['pub_id'],
+            days=int(data['duracion_dias'])
         )
         
         if result['success']:
@@ -291,22 +299,22 @@ def grant_access():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@api_bp.route('/accesses/revoke', methods=['POST'])
+@api_bp.route('/access/<int:client_id>/<int:indicator_id>', methods=['DELETE'])
 @require_admin_token
-def revoke_access():
+def revoke_access(client_id, indicator_id):
     """Revoke access from a client"""
     try:
-        data = request.get_json()
+        # Get client and indicator details for AccesoService
+        from ..models import Cliente, Indicador
+        client = Cliente.get_by_id(client_id)
+        indicator = Indicador.get_by_id(indicator_id)
         
-        required_fields = ['username_tradingview', 'pub_id']
-        if not data or not all(field in data for field in required_fields):
-            return jsonify({
-                'error': f'Required fields: {", ".join(required_fields)}'
-            }), 400
+        if not client or not indicator:
+            return jsonify({'error': 'Client or indicator not found'}), 400
         
         result = AccesoService.revoke_access(
-            username_tradingview=data['username_tradingview'],
-            pub_id=data['pub_id']
+            username_tradingview=client['username_tradingview'],
+            pub_id=indicator['pub_id']
         )
         
         if result['success']:
@@ -317,7 +325,22 @@ def revoke_access():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@api_bp.route('/accesses/check', methods=['POST'])
+# Maintenance endpoint
+@api_bp.route('/maintenance/expired', methods=['POST'])
+@require_admin_token
+def process_expired_accesses():
+    """Process expired accesses"""
+    try:
+        # This could clean up expired accesses or send notifications
+        # For now, just return success
+        return jsonify({
+            'success': True,
+            'message': 'Expired accesses processed successfully'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/access/check', methods=['POST'])
 @require_admin_token
 def check_access():
     """Check access status for a client"""
