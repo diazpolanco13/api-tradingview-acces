@@ -9,6 +9,10 @@ from functools import wraps
 #from threading import Thread
 app = Flask('')
 
+# PineScript Control Access - Phase 1 Core Functionality
+# Note: Advanced features temporarily disabled due to dependency conflicts
+print("🚀 PineScript Control Access - Starting core functionality")
+
 # Disable access logging for production to prevent username leakage
 if os.getenv('ENV') == 'production':
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
@@ -177,6 +181,27 @@ def admin_panel():
 def documentation():
   # Public documentation endpoint
   return render_template('documentation.html')
+
+
+@app.route('/api/v1/status')
+def api_status():
+  """Basic API status endpoint for PineScript Control Access"""
+  return jsonify({
+    'status': 'active',
+    'service': 'PineScript Control Access',
+    'version': '1.0.0-phase1',
+    'features': {
+      'legacy_api': 'active',
+      'management_suite': 'development',
+      'database': 'sqlite_ready'
+    },
+    'endpoints': {
+      'validate': '/validate/<username>',
+      'access': '/access/<username>',  
+      'admin': '/admin',
+      'documentation': '/doc'
+    }
+  })
 
 
 @app.route('/admin/cookies/status', methods=['GET'])

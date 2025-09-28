@@ -6,7 +6,7 @@ entrypoint = "main.py"
 # A list of globs that specify which files and directories should
 # be hidden in the workspace.
 hidden = ["venv", ".config", "**/__pycache__", "**/.mypy_cache", "**/*.pyc"]
-modules = ["web", "python-3.8"]
+modules = ["web", "python-3.10"]
 
 # Specifies which nix channel to use when building the environment.
 [nix]
@@ -49,13 +49,13 @@ args = "Flask API"
 name = "Flask API"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "poetry run python main.py"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [deployment]
 deploymentTarget = "vm"
