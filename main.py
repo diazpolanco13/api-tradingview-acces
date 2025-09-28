@@ -16,8 +16,8 @@ if __name__ == '__main__':
             print("   Token: [HIDDEN - available in environment variables]")
             print("   ⚠️  Para seguridad en producción, el token no se muestra en logs")
         else:
-            print(f"   {admin_token[:12]}...")
-            print("   ⚠️  Token completo disponible en variable ADMIN_TOKEN")
+            print(f"   {admin_token}")
+            print("   ⚠️  Token completo mostrado arriba")
             print("   Para producción, configure ADMIN_TOKEN en variables de entorno")
     else:
         print("✅ Admin panel secured with configured token")
