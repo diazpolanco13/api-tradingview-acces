@@ -11,9 +11,16 @@ from ..services import ClienteService, IndicadorService, AccesoService, Dashboar
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 def require_admin_token(f):
-    """Decorator for admin authentication"""
+    """Decorator for admin authentication - accepts both token headers and authenticated sessions"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from flask import session
+        
+        # Check for authenticated session first
+        if session.get('authenticated'):
+            return f(*args, **kwargs)
+        
+        # Fall back to token authentication
         admin_token = request.headers.get('X-Admin-Token')
         expected_token = os.getenv('ADMIN_TOKEN')
         
@@ -21,7 +28,7 @@ def require_admin_token(f):
             return jsonify({'error': 'Server misconfigured - ADMIN_TOKEN not set'}), 500
         
         if not admin_token or admin_token != expected_token:
-            return jsonify({'error': 'Unauthorized - Valid X-Admin-Token header required'}), 401
+            return jsonify({'error': 'Unauthorized - Authentication required'}), 401
         
         return f(*args, **kwargs)
     return decorated_function

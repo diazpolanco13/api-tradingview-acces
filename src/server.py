@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session, redirect, url_for
 from .tradingview import tradingview
 from .cookie_manager import CookieManager
 import json
@@ -8,6 +8,12 @@ from datetime import datetime
 from functools import wraps
 #from threading import Thread
 app = Flask('')
+
+# Configure sessions for web navigation
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SESSION_COOKIE_SECURE'] = False  # True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # PineScript Control Access - Phase 1 Core Functionality
 print("🚀 PineScript Control Access - Starting core functionality")
@@ -30,11 +36,15 @@ except Exception as e:
 if os.getenv('ENV') == 'production':
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
-# Security: Admin authentication
+# Security: Admin authentication for API endpoints
 def require_admin_token(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Only accept token in secure header, never in query params
+        # Check for authenticated session first
+        if session.get('authenticated'):
+            return f(*args, **kwargs)
+        
+        # Fall back to token authentication
         admin_token = request.headers.get('X-Admin-Token')
         expected_token = os.getenv('ADMIN_TOKEN')
         
@@ -47,6 +57,42 @@ def require_admin_token(f):
         
         return f(*args, **kwargs)
     return decorated_function
+
+# Security: Web session authentication
+def require_web_login(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'authenticated' not in session or not session['authenticated']:
+            return redirect('/admin?redirect=' + request.path)
+        return f(*args, **kwargs)
+    return decorated_function
+
+# API endpoint for web login
+@app.route('/api/auth/login', methods=['POST'])
+def web_login():
+    """Web login endpoint"""
+    data = request.get_json()
+    token = data.get('token') if data else None
+    
+    if not token:
+        return jsonify({'error': 'Token required'}), 400
+    
+    expected_token = os.getenv('ADMIN_TOKEN')
+    if not expected_token:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    
+    if token == expected_token:
+        session['authenticated'] = True
+        session['admin_token'] = token
+        return jsonify({'success': True, 'message': 'Authenticated successfully'})
+    else:
+        return jsonify({'error': 'Invalid token'}), 401
+
+@app.route('/api/auth/logout', methods=['POST'])
+def web_logout():
+    """Web logout endpoint"""
+    session.clear()
+    return jsonify({'success': True, 'message': 'Logged out successfully'})
 
 
 @app.route('/validate/<username>', methods=['GET'])
@@ -187,7 +233,33 @@ def main():
 @app.route('/admin')
 def admin_panel():
   # Public access to serve the HTML - authentication happens via API calls
-  return render_template('admin.html')
+  redirect_url = request.args.get('redirect', '')
+  return render_template('admin.html', redirect_url=redirect_url)
+
+# Web Dashboard Routes (require login)
+@app.route('/dashboard')
+@require_web_login
+def dashboard():
+  """Dashboard web interface"""
+  return render_template('dashboard.html')
+
+@app.route('/clients')
+@require_web_login
+def clients():
+  """Clients management web interface"""
+  return render_template('clients.html')
+
+@app.route('/indicators')
+@require_web_login
+def indicators():
+  """Indicators management web interface"""
+  return render_template('indicators.html')
+
+@app.route('/access')
+@require_web_login
+def access_management():
+  """Access management web interface"""
+  return render_template('access.html')
 
 
 @app.route('/doc')

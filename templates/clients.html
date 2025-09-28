@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - PineScript Control Access</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 20px 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .nav { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .nav a { color: #667eea; text-decoration: none; margin: 0 15px; padding: 8px 16px; border-radius: 5px; }
+        .nav a:hover, .nav a.active { background: #667eea; color: white; }
+        .card { background: white; padding: 30px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #5a67d8; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; font-weight: 600; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: end; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>👥 Gestión de Clientes</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="nav">
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/clients" class="active">👥 Clientes</a>
+            <a href="/indicators">📈 Indicadores</a>
+            <a href="/access">🔐 Accesos</a>
+            <a href="/admin">⚙️ Panel Admin</a>
+            <a href="#" onclick="logout()">🚪 Salir</a>
+        </div>
+
+        <div class="card">
+            <h2>➕ Crear Nuevo Cliente</h2>
+            <form id="clientForm">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Usuario TradingView:</label>
+                        <input type="text" class="form-input" id="username_tradingview" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email:</label>
+                        <input type="email" class="form-input" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre:</label>
+                        <input type="text" class="form-input" id="nombre">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono:</label>
+                        <input type="text" class="form-input" id="telefono">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">✅ Crear Cliente</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Lista de Clientes</h2>
+            <div class="search-box">
+                <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                    <label class="form-label">Buscar:</label>
+                    <input type="text" class="form-input" id="searchInput" placeholder="Buscar por usuario, email o nombre...">
+                </div>
+                <button class="btn" onclick="searchClients()">🔍 Buscar</button>
+                <button class="btn" onclick="loadClients()">🔄 Recargar</button>
+            </div>
+            
+            <div id="clientsList">
+                <div class="loading">⏳ Cargando clientes...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/v1/clients', {
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/admin?redirect=/clients';
+                        return;
+                    }
+                    throw new Error('Failed to load clients');
+                }
+                
+                const data = await response.json();
+                displayClients(data.data);
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientsList').innerHTML = '<div class="loading">❌ Error cargando clientes</div>';
+            }
+        }
+
+        async function searchClients() {
+            const search = document.getElementById('searchInput').value.trim();
+            const url = search ? `/api/v1/clients?search=${encodeURIComponent(search)}` : '/api/v1/clients';
+            
+            try {
+                const response = await fetch(url, {
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/admin?redirect=/clients';
+                        return;
+                    }
+                    throw new Error('Failed to search clients');
+                }
+                
+                const data = await response.json();
+                displayClients(data.data);
+            } catch (error) {
+                console.error('Error searching clients:', error);
+                document.getElementById('clientsList').innerHTML = '<div class="loading">❌ Error en búsqueda</div>';
+            }
+        }
+
+        function displayClients(clients) {
+            if (!clients || clients.length === 0) {
+                document.getElementById('clientsList').innerHTML = '<p>No se encontraron clientes</p>';
+                return;
+            }
+            
+            const table = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario TradingView</th>
+                            <th>Email</th>
+                            <th>Nombre</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${clients.map(client => `
+                            <tr>
+                                <td>${client.id}</td>
+                                <td><strong>${client.username_tradingview}</strong></td>
+                                <td>${client.email || 'N/A'}</td>
+                                <td>${client.nombre || 'N/A'}</td>
+                                <td>${new Date(client.fecha_registro).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-danger" onclick="deleteClient(${client.id})">🗑️ Eliminar</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('clientsList').innerHTML = table;
+        }
+
+        async function createClient(event) {
+            event.preventDefault();
+            
+            const formData = {
+                username_tradingview: document.getElementById('username_tradingview').value,
+                email: document.getElementById('email').value || null,
+                nombre: document.getElementById('nombre').value || null,
+                telefono: document.getElementById('telefono').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/v1/clients', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to create client');
+                
+                alert('✅ Cliente creado exitosamente');
+                document.getElementById('clientForm').reset();
+                loadClients();
+            } catch (error) {
+                console.error('Error creating client:', error);
+                alert('❌ Error creando cliente');
+            }
+        }
+
+        async function deleteClient(clientId) {
+            if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+            
+            try {
+                const response = await fetch(`/api/v1/clients/${clientId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete client');
+                
+                alert('✅ Cliente eliminado');
+                loadClients();
+            } catch (error) {
+                console.error('Error deleting client:', error);
+                alert('❌ Error eliminando cliente');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                window.location.href = '/admin';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                window.location.href = '/admin';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('clientForm').addEventListener('submit', createClient);
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchClients();
+        });
+
+        // Load clients on page load
+        document.addEventListener('DOMContentLoaded', loadClients);
+    </script>
+</body>
+</html>
