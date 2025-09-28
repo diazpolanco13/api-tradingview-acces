@@ -226,15 +226,21 @@ def access(username):
 
 
 @app.route('/')
-def main():
-  return 'Your bot is alive!'
+def home():
+  """Main home page - Admin panel for PineScript Control Access"""
+  # Public access to serve the HTML - authentication happens via API calls
+  redirect_url = request.args.get('redirect', '')
+  return render_template('admin.html', redirect_url=redirect_url)
 
 
 @app.route('/admin')
 def admin_panel():
-  # Public access to serve the HTML - authentication happens via API calls
+  """Legacy admin route - redirects to home"""
+  # Redirect to main home page to consolidate routes
   redirect_url = request.args.get('redirect', '')
-  return render_template('admin.html', redirect_url=redirect_url)
+  if redirect_url:
+    return redirect(f'/?redirect={redirect_url}')
+  return redirect('/')
 
 # Web Dashboard Routes (require login)
 @app.route('/dashboard')
