@@ -62,4 +62,5 @@ waitForPort = 5000
 outputType = "webview"
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
+run = ["poetry", "run", "python", "main.py"]
