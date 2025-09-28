@@ -275,9 +275,11 @@
             <h3>Características principales:</h3>
             <ul>
                 <li><strong>Validación de usuarios:</strong> Verificar si un usuario existe en TradingView</li>
-                <li><strong>Gestión de acceso:</strong> Otorgar, verificar y revocar acceso a indicadores específicos</li>
+                <li><strong>Gestión de acceso individual:</strong> Otorgar, verificar y revocar acceso a indicadores específicos</li>
+                <li><strong>🆕 Acceso masivo:</strong> Otorgar acceso a todos los indicadores con una sola operación</li>
+                <li><strong>🆕 Vista agrupada:</strong> Visualizar usuarios con listas expandibles de indicadores</li>
                 <li><strong>Seguridad robusta:</strong> Autenticación por token para operaciones administrativas</li>
-                <li><strong>Panel web:</strong> Interfaz gráfica para administración de cookies</li>
+                <li><strong>Panel web:</strong> Interfaz gráfica para administración de cookies y gestión</li>
             </ul>
             
             <div class="security-note">
@@ -542,6 +544,167 @@ Body:
                 </div>
             </div>
 
+            <!-- Endpoint: Acceso Masivo (NUEVO) -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-url">/api/v1/access/bulk</span>
+                    <span style="background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">🆕 NUEVO</span>
+                </div>
+                
+                <div class="auth-required">
+                    🔒 <strong>Autenticación requerida:</strong> Este endpoint requiere el header <code>X-Admin-Token</code>
+                </div>
+                
+                <div class="description">Otorgar acceso a todos los indicadores activos para un usuario con una sola operación. Ideal para automatización y gestión eficiente de accesos.</div>
+
+                <table class="parameter-table">
+                    <thead>
+                        <tr>
+                            <th>Campo</th>
+                            <th>Tipo</th>
+                            <th>Requerido</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>username_tradingview</code></td>
+                            <td>string</td>
+                            <td>Sí</td>
+                            <td>Nombre de usuario de TradingView</td>
+                        </tr>
+                        <tr>
+                            <td><code>days</code></td>
+                            <td>integer</td>
+                            <td>Sí</td>
+                            <td>Número de días de acceso (ej: 30)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo de solicitud:</div>
+                    <div class="code-block">POST /api/v1/access/bulk
+Headers: 
+  Content-Type: application/json
+  X-Admin-Token: tu-token-aqui
+Body:
+{
+  "username_tradingview": "usuario123",
+  "days": 30
+}</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta exitosa:</div>
+                    <div class="code-block">{
+  "success": true,
+  "message": "Bulk access granted successfully",
+  "details": {
+    "successful": 5,
+    "failed": 0,
+    "total_indicators": 5,
+    "results": [
+      {
+        "indicator": "Strategy #1",
+        "status": "success", 
+        "message": "Access granted"
+      },
+      {
+        "indicator": "Signal Bot Pro",
+        "status": "success",
+        "message": "Access granted"
+      }
+    ]
+  }
+}</div>
+                </div>
+                
+                <div class="status-codes">
+                    <span class="status-code status-200">201 Created</span>
+                    <span class="status-code status-400">400 Bad Request</span>
+                    <span class="status-code status-401">401 Unauthorized</span>
+                    <span class="status-code status-500">500 Error</span>
+                </div>
+            </div>
+
+            <!-- Endpoint: Vista Agrupada (NUEVO) -->
+            <div class="endpoint">
+                <div class="endpoint-title">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-url">/api/v1/access/grouped</span>
+                    <span style="background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">🆕 NUEVO</span>
+                </div>
+                
+                <div class="auth-required">
+                    🔒 <strong>Autenticación requerida:</strong> Este endpoint requiere el header <code>X-Admin-Token</code>
+                </div>
+                
+                <div class="description">Obtener todos los accesos organizados por usuario con listas expandibles de indicadores. Ideal para interfaces administrativas con vista agrupada.</div>
+                
+                <div class="response-example">
+                    <div class="response-title">Ejemplo de solicitud:</div>
+                    <div class="code-block">GET /api/v1/access/grouped
+Headers: 
+  X-Admin-Token: tu-token-aqui</div>
+                </div>
+                
+                <div class="response-example">
+                    <div class="response-title">Respuesta exitosa:</div>
+                    <div class="code-block">{
+  "success": true,
+  "data": [
+    {
+      "client_id": 1,
+      "username_tradingview": "usuario123",
+      "nombre_completo": "Juan Pérez",
+      "email": "juan@example.com",
+      "indicators_count": 3,
+      "active_indicators": 2,
+      "expired_indicators": 1,
+      "expiring_indicators": 0,
+      "indicators": [
+        {
+          "indicator_id": 1,
+          "indicator_name": "Strategy #1",
+          "pub_id": "PUB;abc123...",
+          "status": "active",
+          "fecha_inicio": "2025-09-28",
+          "fecha_fin": "2025-10-28"
+        },
+        {
+          "indicator_id": 2,
+          "indicator_name": "Signal Bot Pro",
+          "pub_id": "PUB;def456...",
+          "status": "expired",
+          "fecha_inicio": "2025-08-01",
+          "fecha_fin": "2025-09-01"
+        }
+      ]
+    }
+  ]
+}</div>
+                </div>
+                
+                <div class="description">
+                    <strong>Campos de respuesta:</strong>
+                    <ul>
+                        <li><code>indicators_count</code>: Total de indicadores del usuario</li>
+                        <li><code>active_indicators</code>: Indicadores con acceso activo</li>
+                        <li><code>expired_indicators</code>: Indicadores con acceso vencido</li>
+                        <li><code>expiring_indicators</code>: Indicadores próximos a vencer (≤7 días)</li>
+                        <li><code>status</code>: "active", "expired", "expiring"</li>
+                    </ul>
+                </div>
+                
+                <div class="status-codes">
+                    <span class="status-code status-200">200 OK</span>
+                    <span class="status-code status-401">401 Unauthorized</span>
+                    <span class="status-code status-500">500 Error</span>
+                </div>
+            </div>
+
             <!-- Panel de Admin -->
             <div class="endpoint">
                 <div class="endpoint-title">
@@ -562,6 +725,8 @@ Body:
                         <li>Gestión de cookies de TradingView</li>
                         <li>Verificación de estado de cuenta</li>
                         <li>Pruebas de endpoints</li>
+                        <li><strong>🆕 Modo de acceso masivo:</strong> Interfaz para otorgar acceso a todos los indicadores</li>
+                        <li><strong>🆕 Vista agrupada:</strong> Visualización organizada por usuarios</li>
                     </ul>
                 </div>
             </div>
@@ -644,7 +809,87 @@ if user_valid.get('validuser'):
     access_status = check_access(username, indicator_id)
     print(f"Estado del acceso: {access_status}")</div>
 
-            <h3>Ejemplo 3: JavaScript/Node.js</h3>
+            <h3>Ejemplo 3: Acceso masivo con cURL</h3>
+            <div class="code-block"># 1. Verificar que el usuario existe
+curl -X GET "https://tu-dominio.repl.co/validate/usuario123"
+
+# 2. Obtener vista agrupada actual
+curl -X GET "https://tu-dominio.repl.co/api/v1/access/grouped" \
+  -H "X-Admin-Token: tu-token-aqui"
+
+# 3. Otorgar acceso masivo a todos los indicadores
+curl -X POST "https://tu-dominio.repl.co/api/v1/access/bulk" \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: tu-token-aqui" \
+  -d '{
+    "username_tradingview": "usuario123",
+    "days": 30
+  }'
+
+# 4. Verificar resultados con vista agrupada
+curl -X GET "https://tu-dominio.repl.co/api/v1/access/grouped" \
+  -H "X-Admin-Token: tu-token-aqui"</div>
+
+            <h3>Ejemplo 4: Python con acceso masivo</h3>
+            <div class="code-block">import requests
+import json
+
+# Configuración
+BASE_URL = "https://tu-dominio.repl.co"
+ADMIN_TOKEN = "tu-token-aqui"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-Admin-Token": ADMIN_TOKEN
+}
+
+def grant_bulk_access(username, days):
+    """Otorgar acceso masivo a todos los indicadores"""
+    data = {
+        "username_tradingview": username,
+        "days": days
+    }
+    response = requests.post(
+        f"{BASE_URL}/api/v1/access/bulk",
+        headers=HEADERS,
+        json=data
+    )
+    return response.json()
+
+def get_grouped_access():
+    """Obtener vista agrupada de accesos"""
+    response = requests.get(
+        f"{BASE_URL}/api/v1/access/grouped",
+        headers=HEADERS
+    )
+    return response.json()
+
+# Ejemplo de uso
+username = "usuario123"
+
+# Vista actual de accesos
+print("Vista actual de accesos:")
+grouped_data = get_grouped_access()
+for user in grouped_data.get('data', []):
+    print(f"Usuario: {user['username_tradingview']}")
+    print(f"  Indicadores activos: {user['active_indicators']}")
+    print(f"  Indicadores vencidos: {user['expired_indicators']}")
+
+# Otorgar acceso masivo
+print(f"\nOtorgando acceso masivo a {username}...")
+bulk_result = grant_bulk_access(username, 30)
+
+if bulk_result.get('success'):
+    details = bulk_result['details']
+    print(f"✅ Acceso otorgado a {details['successful']} de {details['total_indicators']} indicadores")
+    
+    # Mostrar resultados detallados
+    for result in details['results']:
+        status_emoji = "✅" if result['status'] == 'success' else "❌"
+        print(f"  {status_emoji} {result['indicator']}: {result['message']}")
+else:
+    print(f"❌ Error: {bulk_result.get('error', 'Unknown error')}")</div>
+
+            <h3>Ejemplo 5: JavaScript/Node.js</h3>
             <div class="code-block">const axios = require('axios');
 
 const API_BASE = 'https://tu-dominio.repl.co';
