@@ -25,6 +25,122 @@
         .table th { background: #f8f9fa; font-weight: 600; }
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: end; }
         .loading { text-align: center; padding: 40px; color: #666; }
+
+        /* Notificaciones elegantes */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+        }
+
+        /* Modal de confirmación */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            animation: modalSlide 0.3s ease-out;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirm-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .confirm-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn.danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .confirm-btn.danger:hover {
+            background: linear-gradient(135deg, #c82333, #a71e2a);
+            transform: translateY(-1px);
+        }
+
+        .confirm-btn.cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .confirm-btn.cancel:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
@@ -86,7 +202,71 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-title" id="confirmTitle">¿Confirmar acción?</div>
+            <div class="confirm-message" id="confirmMessage">¿Estás seguro de realizar esta acción?</div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn danger" id="confirmYes">Sí, Eliminar</button>
+                <button class="confirm-btn cancel" id="confirmNo">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Sistema de notificaciones elegante
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar con animación
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto-remover después de 4 segundos
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Sistema de confirmación elegante
+        function showConfirmation(title, message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+                
+                modal.classList.add('show');
+                
+                const handleResponse = (confirmed) => {
+                    modal.classList.remove('show');
+                    resolve(confirmed);
+                };
+                
+                document.getElementById('confirmYes').onclick = () => handleResponse(true);
+                document.getElementById('confirmNo').onclick = () => handleResponse(false);
+                
+                // Cerrar con ESC o click fuera
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        handleResponse(false);
+                        document.removeEventListener('keydown', handleEscape);
+                    }
+                };
+                document.addEventListener('keydown', handleEscape);
+                
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        handleResponse(false);
+                    }
+                };
+            });
+        }
+
         async function loadClients() {
             try {
                 const response = await fetch('/api/v1/clients', {
@@ -194,17 +374,22 @@
                 
                 if (!response.ok) throw new Error('Failed to create client');
                 
-                alert('✅ Cliente creado exitosamente');
+                showNotification('✅ Cliente creado exitosamente', 'success');
                 document.getElementById('clientForm').reset();
                 loadClients();
             } catch (error) {
                 console.error('Error creating client:', error);
-                alert('❌ Error creando cliente');
+                showNotification('❌ Error creando cliente', 'error');
             }
         }
 
         async function deleteClient(clientId) {
-            if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+            const confirmed = await showConfirmation(
+                '🗑️ ¿Eliminar Cliente?',
+                '¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.'
+            );
+            
+            if (!confirmed) return;
             
             try {
                 const response = await fetch(`/api/v1/clients/${clientId}`, {
@@ -214,11 +399,11 @@
                 
                 if (!response.ok) throw new Error('Failed to delete client');
                 
-                alert('✅ Cliente eliminado');
+                showNotification('✅ Cliente eliminado exitosamente', 'success');
                 loadClients();
             } catch (error) {
                 console.error('Error deleting client:', error);
-                alert('❌ Error eliminando cliente');
+                showNotification('❌ Error eliminando cliente', 'error');
             }
         }
 
