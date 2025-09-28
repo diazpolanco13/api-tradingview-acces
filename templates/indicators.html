@@ -63,6 +63,92 @@
         .btn-primary:hover {
             background: #0056b3;
         }
+
+        /* Notification system */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #dc3545, #e74c3c);
+        }
+
+        .notification.warning {
+            background: linear-gradient(45deg, #ffc107, #fd7e14);
+        }
+
+        .notification .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            margin-left: 10px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .notification .close-btn:hover {
+            opacity: 1;
+        }
+
+        /* Confirmation modal */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 2500;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .confirm-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .confirm-content h3 {
+            margin-top: 0;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+
+        .confirm-content p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -143,13 +229,59 @@
                 
                 <div style="margin-top: 20px;">
                     <button type="submit" class="btn btn-success">✅ Guardar Cambios</button>
-                    <button type="button" class="btn" onclick="closeEditModal()">❌ Cancelar</button>
+                    <button type="button" class="btn" id="cancelEditBtn">❌ Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal de confirmación -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-content">
+            <h3>🗑️ Confirmar Eliminación</h3>
+            <p id="confirmMessage">¿Estás seguro de eliminar este indicador?</p>
+            <div class="confirm-buttons">
+                <button class="btn btn-danger" id="confirmDelete">Sí, Eliminar</button>
+                <button class="btn" id="cancelDelete">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Sistema de notificaciones elegante
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                ${message}
+                <button class="close-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar con animación
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto-remover después de 4 segundos
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Variables para modal de confirmación
+        let pendingDeleteId = null;
+
+        function showConfirmModal(message, indicatorName) {
+            document.getElementById('confirmMessage').textContent = `¿Estás seguro de eliminar "${indicatorName}"?`;
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingDeleteId = null;
+        }
+
         async function loadIndicators() {
             try {
                 const response = await fetch('/api/v1/indicators', {
@@ -207,7 +339,8 @@
                                             data-precio="${indicator.precio}" 
                                             data-descripcion="${indicator.descripcion || ''}">✏️ Editar</button>
                                     <button class="btn btn-danger delete-btn" 
-                                            data-id="${indicator.id}">🗑️ Eliminar</button>
+                                            data-id="${indicator.id}"
+                                            data-nombre="${indicator.nombre}">🗑️ Eliminar</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -240,18 +373,16 @@
                 
                 if (!response.ok) throw new Error('Failed to create indicator');
                 
-                alert('✅ Indicador creado exitosamente');
+                showNotification('✅ Indicador creado exitosamente', 'success');
                 document.getElementById('indicatorForm').reset();
                 loadIndicators();
             } catch (error) {
                 console.error('Error creating indicator:', error);
-                alert('❌ Error creando indicador');
+                showNotification('❌ Error creando indicador', 'error');
             }
         }
 
         async function deleteIndicator(indicatorId) {
-            if (!confirm('¿Estás seguro de eliminar este indicador?')) return;
-            
             try {
                 const response = await fetch(`/api/v1/indicators/${indicatorId}`, {
                     method: 'DELETE',
@@ -260,11 +391,13 @@
                 
                 if (!response.ok) throw new Error('Failed to delete indicator');
                 
-                alert('✅ Indicador eliminado');
+                showNotification('✅ Indicador eliminado exitosamente', 'success');
                 loadIndicators();
+                hideConfirmModal();
             } catch (error) {
                 console.error('Error deleting indicator:', error);
-                alert('❌ Error eliminando indicador');
+                showNotification('❌ Error eliminando indicador', 'error');
+                hideConfirmModal();
             }
         }
 
@@ -320,25 +453,42 @@
                 
                 if (!response.ok) throw new Error('Failed to update indicator');
                 
-                alert('✅ Indicador actualizado exitosamente');
+                showNotification('✅ Indicador actualizado exitosamente', 'success');
                 closeEditModal();
                 loadIndicators();
             } catch (error) {
                 console.error('Error updating indicator:', error);
-                alert('❌ Error actualizando indicador');
+                showNotification('❌ Error actualizando indicador', 'error');
             }
         }
 
-        // Event delegation for edit and delete buttons
+        // Event delegation for edit and delete buttons (arreglado para emojis)
         document.addEventListener('click', function(event) {
-            if (event.target.classList.contains('edit-btn')) {
-                editIndicator(event.target);
+            // Buscar el botón más cercano (puede ser el target o un ancestro)
+            const editBtn = event.target.closest('.edit-btn');
+            const deleteBtn = event.target.closest('.delete-btn');
+            
+            if (editBtn) {
+                editIndicator(editBtn);
             }
-            if (event.target.classList.contains('delete-btn')) {
-                const id = event.target.getAttribute('data-id');
-                deleteIndicator(id);
+            
+            if (deleteBtn) {
+                const id = deleteBtn.getAttribute('data-id');
+                const nombre = deleteBtn.getAttribute('data-nombre') || 'este indicador';
+                pendingDeleteId = id;
+                showConfirmModal('¿Estás seguro?', nombre);
             }
         });
+
+        // Event listeners para el modal de confirmación
+        document.getElementById('confirmDelete').addEventListener('click', function() {
+            if (pendingDeleteId) {
+                deleteIndicator(pendingDeleteId);
+            }
+        });
+
+        document.getElementById('cancelDelete').addEventListener('click', hideConfirmModal);
+        document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
 
         // Event listeners
         document.getElementById('indicatorForm').addEventListener('submit', createIndicator);
